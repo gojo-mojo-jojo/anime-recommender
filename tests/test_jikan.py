@@ -45,6 +45,7 @@ async def test_search_anime_returns_mapped_result():
     assert result.year == 2009
     assert "Military" in result.themes
     assert result.image_url == "https://example.com/fmab_large.jpg"
+    assert result.category == "anime"
 
 
 @pytest.mark.asyncio

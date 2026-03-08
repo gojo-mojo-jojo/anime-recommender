@@ -4,3 +4,4 @@ import os
 # so pydantic-settings doesn't fail during test collection.
 os.environ.setdefault("ANTHROPIC_API_KEY", "test-key")
 os.environ.setdefault("TAVILY_API_KEY", "test-tavily-key")
+os.environ.setdefault("TMDB_API_KEY", "test-tmdb-key")

@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from .models import Anime
+from .models import ContentItem
 
 logger = logging.getLogger(__name__)
 
@@ -62,10 +62,10 @@ async def _get(url: str, params: dict[str, Any]) -> dict[str, Any]:
     return {}
 
 
-def _parse_anime(entry: dict[str, Any]) -> Anime:
+def _parse_anime(entry: dict[str, Any]) -> ContentItem:
     images = entry.get("images", {}).get("jpg", {})
     studios = entry.get("studios", [])
-    return Anime(
+    return ContentItem(
         id=entry["mal_id"],
         title=entry.get("title_english") or entry["title"],
         synopsis=entry.get("synopsis") or "",
@@ -76,7 +76,8 @@ def _parse_anime(entry: dict[str, Any]) -> Anime:
         image_url=images.get("large_image_url") or images.get("image_url"),
         year=entry.get("year"),
         studio=studios[0]["name"] if studios else None,
-        anime_type=entry.get("type"),
+        content_type=entry.get("type"),
+        category="anime",
     )
 
 
@@ -107,7 +108,7 @@ def _title_similarity(query: str, entry: dict[str, Any]) -> float:
     return best
 
 
-async def search_anime(title: str) -> Anime | None:
+async def search_anime(title: str) -> ContentItem | None:
     data = await _get(f"{JIKAN_BASE}/anime", {"q": title, "limit": 3})
     entries = data.get("data", [])
     if not entries:

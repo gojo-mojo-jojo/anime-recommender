@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Anime Recommender</title>
+  <title>Watch my Show!</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -36,6 +36,34 @@
       color: #8878aa;
       font-size: 0.95rem;
     }
+
+    .bmc-footer {
+      text-align: center;
+      padding: 2rem 1rem 2.5rem;
+    }
+
+    .bmc-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #1a1a2e;
+      border: 1px solid #2e2e50;
+      border-radius: 24px;
+      color: #fbbf24;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.6rem 1.4rem;
+      text-decoration: none;
+      transition: border-color 0.25s, background 0.25s, transform 0.15s;
+    }
+
+    .bmc-link:hover {
+      border-color: #fbbf24;
+      background: #1e1a10;
+      transform: translateY(-2px);
+    }
+
+    .bmc-icon { font-size: 1.15rem; }
 
     .search-section {
       max-width: 720px;
@@ -157,6 +185,147 @@
     .mode-icon {
       margin-right: 0.35rem;
       font-size: 0.9rem;
+    }
+
+    .category-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.4rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .cat-tab {
+      background: #1a1a2e;
+      border: 1px solid #2e2e50;
+      border-radius: 10px;
+      color: #6a5a8a;
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.5rem 1.1rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: inherit;
+    }
+
+    .cat-tab.active {
+      background: linear-gradient(135deg, #7c3aed33, #db277733);
+      border-color: #7c3aed;
+      color: #e0d0ff;
+    }
+
+    .cat-tab:not(.active):hover {
+      border-color: #4a3a6a;
+      color: #a090c0;
+    }
+
+    .cat-icon {
+      margin-right: 0.3rem;
+    }
+
+    .creativity-slider {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .creativity-slider label {
+      font-size: 0.78rem;
+      color: #6a5a8a;
+      white-space: nowrap;
+      min-width: 70px;
+    }
+
+    .creativity-slider label:first-of-type { text-align: right; }
+    .creativity-slider label:last-of-type { text-align: left; }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 0.8rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .count-selector {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .count-selector .count-label {
+      font-size: 0.78rem;
+      color: #6a5a8a;
+      margin-right: 0.5rem;
+      white-space: nowrap;
+    }
+
+    .count-btn {
+      background: #1a1a2e;
+      border: 1px solid #2e2e50;
+      color: #6a5a8a;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.3rem 0.7rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: inherit;
+    }
+
+    .count-btn:first-of-type { border-radius: 16px 0 0 16px; border-right: none; }
+    .count-btn:last-of-type { border-radius: 0 16px 16px 0; }
+    .count-btn:not(:first-of-type):not(:last-of-type) { border-right: none; }
+
+    .count-btn.active {
+      background: linear-gradient(135deg, #7c3aed22, #db277722);
+      border-color: #7c3aed;
+      color: #e0d0ff;
+    }
+
+    .count-btn:last-of-type.active { border-left-color: #7c3aed; }
+    .count-btn:not(:first-of-type):not(:last-of-type).active { border-right-color: #7c3aed; border-left-color: #7c3aed; }
+    .count-btn:first-of-type.active + .count-btn { border-left-color: #7c3aed; }
+
+    .count-btn:not(.active):hover {
+      border-color: #4a3a6a;
+      color: #a090c0;
+    }
+
+    .creativity-slider input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 180px;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #2e2e50, #7c3aed, #db2777);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .creativity-slider input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #e0d0ff;
+      border: 2px solid #7c3aed;
+      box-shadow: 0 0 6px #7c3aed88;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .creativity-slider input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .creativity-slider input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #e0d0ff;
+      border: 2px solid #7c3aed;
+      box-shadow: 0 0 6px #7c3aed88;
+      cursor: pointer;
     }
 
     .status {
@@ -294,7 +463,55 @@
       line-height: 1.4;
     }
 
-    .card { cursor: pointer; }
+    .card { cursor: pointer; position: relative; }
+
+    .card-actions {
+      display: flex;
+      gap: 0.4rem;
+      padding: 0 1.1rem 0.8rem;
+    }
+
+    .dismiss-btn {
+      flex: 1;
+      padding: 0.35rem 0;
+      border: 1px solid #2e2e50;
+      border-radius: 8px;
+      background: #1a1a2e;
+      color: #6a5a8a;
+      font-size: 0.72rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dismiss-btn:hover {
+      border-color: #7c3aed;
+      color: #c4b5fd;
+      background: #1e1040;
+    }
+
+    .dismiss-btn.watched:hover { border-color: #22c55e; color: #86efac; }
+    .dismiss-btn.not-interested:hover { border-color: #ef4444; color: #fca5a5; }
+
+    .card-wrapper {
+      perspective: 1000px;
+    }
+
+    .card-wrapper.flipping .card {
+      animation: cardFlip 0.5s ease-in-out;
+    }
+
+    @keyframes cardFlip {
+      0% { transform: rotateY(0deg) scale(1); opacity: 1; }
+      50% { transform: rotateY(90deg) scale(0.95); opacity: 0.5; }
+      100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+    }
+
+    .card-wrapper.no-reserve .dismiss-btn {
+      opacity: 0.3;
+      cursor: default;
+      pointer-events: none;
+    }
 
     /* Modal */
     .modal-backdrop {
@@ -339,6 +556,48 @@
     .modal-title { font-size: 1.3rem; font-weight: 700; color: #f0e8ff; }
 
     .modal-meta { display: flex; gap: 1rem; font-size: 0.85rem; color: #7a6a9a; }
+
+    .provider-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      min-height: 28px;
+    }
+
+    .provider-label {
+      font-size: 0.75rem;
+      color: #6a5a8a;
+      font-weight: 500;
+      margin-right: 0.2rem;
+    }
+
+    .provider-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #1e1040;
+      border: 1px solid #2e2e50;
+      border-radius: 6px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.72rem;
+      color: #c4b5fd;
+      transition: border-color 0.2s;
+    }
+
+    .provider-badge:hover { border-color: #7c3aed; }
+
+    .provider-badge img {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+    }
+
+    .provider-bar .prov-loading {
+      font-size: 0.72rem;
+      color: #4a3a6a;
+      font-style: italic;
+    }
 
     .modal-explanation {
       font-size: 0.92rem;
@@ -702,11 +961,18 @@
 <body>
 
 <header>
-  <h1>Anime Recommender</h1>
+  <h1>Watch My Show</h1>
   <p>Describe what you're in the mood for — We will find the perfect match.</p>
 </header>
 
 <div class="search-section">
+  <div class="category-tabs">
+    <button class="cat-tab active" data-cat="anime" onclick="setCategory(this)"><span class="cat-icon">🎌</span>Anime</button>
+    <button class="cat-tab" data-cat="movie" onclick="setCategory(this)"><span class="cat-icon">🎬</span>Movies</button>
+    <button class="cat-tab" data-cat="series" onclick="setCategory(this)"><span class="cat-icon">📺</span>Series</button>
+    <button class="cat-tab" data-cat="cartoon" onclick="setCategory(this)"><span class="cat-icon">🖍️</span>Cartoons</button>
+    <button class="cat-tab" data-cat="any" onclick="setCategory(this)"><span class="cat-icon">🎲</span>Mix</button>
+  </div>
   <div class="search-box">
     <textarea id="pref-input" placeholder="e.g. dark fantasy with complex characters and slow world-building..."></textarea>
     <button id="search-btn" onclick="getRecommendations()">Recommend</button>
@@ -719,17 +985,30 @@
       <span class="mode-icon">🔥</span>Trending & Popular
     </button>
   </div>
-  <div class="examples">
-    <span class="example-chip" onclick="useExample(this)">dark fantasy, morally grey</span>
-    <span class="example-chip" onclick="useExample(this)">cozy slice of life, emotional</span>
-    <span class="example-chip" onclick="useExample(this)">mecha, epic battles</span>
-    <span class="example-chip" onclick="useExample(this)">psychological thriller</span>
-    <span class="example-chip" onclick="useExample(this)">romance, high school</span>
+  <div class="controls-row">
+    <div class="creativity-slider">
+      <label>Safe Picks</label>
+      <input type="range" id="creativity-range" min="0" max="100" value="50" oninput="updateCreativity(this.value)" />
+      <label>Surprise Me</label>
+    </div>
+    <div class="count-selector">
+      <span class="count-label">Results:</span>
+      <button class="count-btn" data-count="6" onclick="setCount(this)">6</button>
+      <button class="count-btn active" data-count="9" onclick="setCount(this)">9</button>
+      <button class="count-btn" data-count="12" onclick="setCount(this)">12</button>
+    </div>
   </div>
+  <div class="examples" id="example-chips"></div>
 </div>
 
 <div id="status"></div>
 <div id="results" class="results"></div>
+
+<div class="bmc-footer">
+  <a class="bmc-link" href="https://buymeacoffee.com/pratik142857" target="_blank" rel="noopener">
+    <span class="bmc-icon">☕</span> Buy me a coffee
+  </a>
+</div>
 
 <!-- Modal -->
 <div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)">
@@ -738,6 +1017,7 @@
     <div class="modal-body">
       <div id="modal-title" class="modal-title"></div>
       <div id="modal-meta" class="modal-meta"></div>
+      <div id="modal-providers" class="provider-bar"></div>
       <div id="modal-explanation" class="modal-explanation loading">Asking Claude why this fits your taste…</div>
       <button class="modal-close" onclick="closeModal()">Close</button>
     </div>
@@ -753,22 +1033,108 @@
 
   let lastPreference = '';
   let currentMode = 'personalized';
+  let currentCategory = 'anime';
+  let currentCreativity = 0.5;
+  let currentCount = 9;
   let stepTimer = null;
   let kaomojiTimer = null;
+
+  function updateCreativity(val) {
+    currentCreativity = parseInt(val, 10) / 100;
+  }
+
+  function setCount(el) {
+    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    currentCount = parseInt(el.dataset.count, 10);
+  }
+
+  const CATEGORY_CONFIG = {
+    anime: {
+      placeholder: 'e.g. dark fantasy with complex characters and slow world-building...',
+      examples: ['dark fantasy, morally grey', 'cozy slice of life, emotional', 'mecha, epic battles', 'psychological thriller', 'romance, high school'],
+      steps: [
+        'Identifying genres from your preference…',
+        'Searching anime database on MyAnimeList…',
+        'Reading web reviews for top candidates…',
+        'Ranking the best matches for you…',
+        'Fetching artwork and metadata…',
+      ],
+      cardIcon: '🎌',
+    },
+    movie: {
+      placeholder: 'e.g. mind-bending sci-fi with plot twists like Inception...',
+      examples: ['mind-bending sci-fi', 'feel-good comedy, heartwarming', 'gritty crime thriller', 'epic historical drama', 'horror, supernatural'],
+      steps: [
+        'Analyzing your movie taste…',
+        'Searching film database on TMDB…',
+        'Reading critic and audience reviews…',
+        'Ranking the best matches for you…',
+        'Fetching posters and metadata…',
+      ],
+      cardIcon: '🎬',
+    },
+    series: {
+      placeholder: 'e.g. gripping drama with complex characters like Breaking Bad...',
+      examples: ['gripping drama, antihero', 'sci-fi mystery, dystopian', 'dark comedy, satire', 'true crime, documentary style', 'political thriller'],
+      steps: [
+        'Analyzing your series taste…',
+        'Searching TV database on TMDB…',
+        'Reading reviews and ratings…',
+        'Ranking the best matches for you…',
+        'Fetching posters and metadata…',
+      ],
+      cardIcon: '📺',
+    },
+    cartoon: {
+      placeholder: 'e.g. epic adventure like Avatar: The Last Airbender...',
+      examples: ['epic adventure, coming of age', 'adult comedy, satirical', 'superhero action', 'wholesome kids, educational', 'dark and surreal'],
+      steps: [
+        'Analyzing your animation taste…',
+        'Searching animated shows on TMDB…',
+        'Reading reviews and ratings…',
+        'Ranking the best matches for you…',
+        'Fetching artwork and metadata…',
+      ],
+      cardIcon: '🖍️',
+    },
+    any: {
+      placeholder: 'e.g. epic stories with deep world-building across any medium...',
+      examples: ['mind-bending stories', 'feel-good comfort watches', 'dark and gritty', 'coming of age, emotional', 'action-packed adventures'],
+      steps: [
+        'Analyzing your entertainment taste…',
+        'Searching across anime, movies, series & cartoons…',
+        'Reading reviews and ratings…',
+        'Picking the best mix for you…',
+        'Fetching artwork and metadata…',
+      ],
+      cardIcon: '🎲',
+    },
+  };
+
+  function setCategory(el) {
+    document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    currentCategory = el.dataset.cat;
+    const cfg = CATEGORY_CONFIG[currentCategory];
+    input.placeholder = cfg.placeholder;
+    renderExamples();
+  }
+
+  function renderExamples() {
+    const cfg = CATEGORY_CONFIG[currentCategory];
+    document.getElementById('example-chips').innerHTML = cfg.examples
+      .map(e => `<span class="example-chip" onclick="useExample(this)">${e}</span>`)
+      .join('');
+  }
+
+  renderExamples();
 
   function setMode(el) {
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
     currentMode = el.dataset.mode;
   }
-
-  const STEPS = [
-    "Identifying genres from your preference…",
-    "Searching anime database on MyAnimeList…",
-    "Reading web reviews for top candidates…",
-    "Ranking the best matches for you…",
-    "Fetching artwork and metadata…",
-  ];
 
   const KAOMOJI = [
     '(ﾉ◕ヮ◕)ﾉ*:・ﾟ✧',
@@ -881,6 +1247,7 @@
   function startLoadingSteps() {
     let stepIdx = 0;
     let kIdx = 0;
+    const steps = CATEGORY_CONFIG[currentCategory].steps;
 
     statusEl.innerHTML = `
       <div class="loading-scene">
@@ -894,13 +1261,13 @@
         </div>
         <div class="loading-quote">${sessionChar.quote}</div>
         <div class="loading-kaomoji" id="kaomoji-text">${KAOMOJI[0]}</div>
-        <div class="loading-step"><span class="spinner"></span> <span id="step-text">${STEPS[0]}</span></div>
+        <div class="loading-step"><span class="spinner"></span> <span id="step-text">${steps[0]}</span></div>
       </div>`;
 
     stepTimer = setInterval(() => {
-      stepIdx = Math.min(stepIdx + 1, STEPS.length - 1);
+      stepIdx = Math.min(stepIdx + 1, steps.length - 1);
       const el = document.getElementById('step-text');
-      if (el) el.textContent = STEPS[stepIdx];
+      if (el) el.textContent = steps[stepIdx];
     }, 2500);
 
     kaomojiTimer = setInterval(() => {
@@ -918,20 +1285,23 @@
     statusEl.innerHTML = '';
   }
 
-  function openModal(anime) {
-    document.getElementById('modal-title').textContent = anime.title;
+  function openModal(item) {
+    document.getElementById('modal-title').textContent = item.title;
     const modalParts = [
-      anime.score != null ? `★ ${anime.score.toFixed(1)}` : '',
-      anime.year ? `${anime.year}` : '',
-      anime.episodes != null ? `${anime.episodes} ep` : '',
-      anime.studio ? anime.studio : '',
-      anime.genres.join(' · '),
+      item.score != null ? `★ ${item.score.toFixed(1)}` : '',
+      item.year ? `${item.year}` : '',
+      item.episodes != null ? `${item.episodes} ep` : '',
+      item.seasons != null ? `${item.seasons} season${item.seasons !== 1 ? 's' : ''}` : '',
+      item.runtime != null ? `${item.runtime} min` : '',
+      item.studio ? item.studio : '',
+      item.director ? item.director : '',
+      item.genres.join(' · '),
     ];
     document.getElementById('modal-meta').innerHTML = modalParts.filter(Boolean).join('&nbsp;&nbsp;·&nbsp;&nbsp;');
 
     const img = document.getElementById('modal-img');
-    if (anime.image_url) {
-      img.src = anime.image_url;
+    if (item.image_url) {
+      img.src = item.image_url;
       img.style.display = 'block';
     } else {
       img.style.display = 'none';
@@ -954,6 +1324,37 @@
     backdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
 
+    const provBar = document.getElementById('modal-providers');
+    provBar.innerHTML = '<span class="prov-loading">Finding where to watch...</span>';
+    const region = (navigator.language || 'en-US').split('-').pop().toUpperCase() || 'US';
+    const cat = item.category || currentCategory;
+    const provParams = new URLSearchParams({ id: item.id, category: cat, region, title: item.title });
+    fetch(`/api/providers?${provParams}`)
+      .then(r => r.json())
+      .then(providers => {
+        if (!providers.length) {
+          provBar.innerHTML = '<span class="provider-label">Streaming info not available for your region</span>';
+          return;
+        }
+        const flatrate = providers.filter(p => p.type === 'flatrate' || p.type === 'free' || p.type === 'ads');
+        const others = providers.filter(p => p.type === 'rent' || p.type === 'buy');
+        let html = '';
+        if (flatrate.length) {
+          html += '<span class="provider-label">Stream:</span>';
+          html += flatrate.map(p =>
+            `<span class="provider-badge">${p.logo_url ? `<img src="${p.logo_url}" alt="${escHtml(p.name)}">` : ''}${escHtml(p.name)}</span>`
+          ).join('');
+        }
+        if (others.length) {
+          html += `<span class="provider-label" style="margin-left:${flatrate.length ? '0.6rem' : '0'}">Rent/Buy:</span>`;
+          html += others.slice(0, 4).map(p =>
+            `<span class="provider-badge">${p.logo_url ? `<img src="${p.logo_url}" alt="${escHtml(p.name)}">` : ''}${escHtml(p.name)}</span>`
+          ).join('');
+        }
+        provBar.innerHTML = html;
+      })
+      .catch(() => { provBar.innerHTML = ''; });
+
     let modalMsgTimer = setInterval(() => {
       const txt = expl.querySelector('.modal-loading-text');
       if (txt) txt.textContent = MODAL_MSGS[Math.floor(Math.random() * MODAL_MSGS.length)];
@@ -964,9 +1365,10 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         preference: lastPreference,
-        title: anime.title,
-        synopsis: anime.synopsis,
-        genres: anime.genres,
+        title: item.title,
+        synopsis: item.synopsis,
+        genres: item.genres,
+        category: currentCategory,
       }),
     })
       .then(async res => {
@@ -1017,7 +1419,7 @@
       const res = await fetch('/api/recommend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ preferences, mode: currentMode }),
+        body: JSON.stringify({ preferences, mode: currentMode, category: currentCategory, creativity: currentCreativity, count: currentCount }),
       });
 
       if (!res.ok) throw new Error(`Server error ${res.status}`);
@@ -1033,31 +1435,26 @@
     }
   }
 
-  function renderCards(anime) {
-    if (!anime.length) {
-      statusEl.innerHTML = '<p class="status">No results found. Try a different description.</p>';
-      return;
-    }
+  let _reserveItems = [];
 
-    // Store anime data for modal access
-    window._animeData = {};
-    anime.forEach(a => { window._animeData[a.id] = a; });
+  function buildCardHTML(a, icon) {
+    const metaParts = [];
+    if (a.score != null) metaParts.push(`<span class="score">★ ${a.score.toFixed(1)}</span>`);
+    if (a.year) metaParts.push(`<span>${a.year}</span>`);
+    if (a.episodes != null) metaParts.push(`<span>${a.episodes} ep</span>`);
+    if (a.seasons != null) metaParts.push(`<span>${a.seasons} season${a.seasons !== 1 ? 's' : ''}</span>`);
+    if (a.runtime != null) metaParts.push(`<span>${a.runtime} min</span>`);
+    if (a.studio) metaParts.push(`<span>${escHtml(a.studio)}</span>`);
+    if (a.director) metaParts.push(`<span>${escHtml(a.director)}</span>`);
 
-    resultsEl.innerHTML = anime.map(a => {
-      const metaParts = [];
-      if (a.score != null) metaParts.push(`<span class="score">★ ${a.score.toFixed(1)}</span>`);
-      if (a.year) metaParts.push(`<span>${a.year}</span>`);
-      if (a.episodes != null) metaParts.push(`<span>${a.episodes} ep</span>`);
-      if (a.studio) metaParts.push(`<span>${escHtml(a.studio)}</span>`);
+    const tags = a.genres.map(g => `<span class="genre-tag">${escHtml(g)}</span>`);
+    if (a.themes) tags.push(...a.themes.map(t => `<span class="theme-tag">${escHtml(t)}</span>`));
 
-      const tags = a.genres.map(g => `<span class="genre-tag">${escHtml(g)}</span>`);
-      if (a.themes) tags.push(...a.themes.map(t => `<span class="theme-tag">${escHtml(t)}</span>`));
-
-      return `
-      <div class="card" onclick="openModal(window._animeData[${a.id}])">
+    return `
+      <div class="card" onclick="openModal(window._itemData[${a.id}])">
         ${a.image_url
           ? `<img class="card-image" src="${a.image_url}" alt="${escHtml(a.title)}" loading="lazy" onerror="this.replaceWith(placeholder())">`
-          : `<div class="card-image-placeholder">🎌</div>`}
+          : `<div class="card-image-placeholder">${icon}</div>`}
         <div class="card-body">
           <div class="card-title">${escHtml(a.title)}</div>
           <div class="card-meta">${metaParts.join('')}</div>
@@ -1065,8 +1462,60 @@
           ${a.reason ? `<p class="reason">${escHtml(a.reason)}</p>` : ''}
           ${a.synopsis ? `<p class="synopsis">${escHtml(a.synopsis)}</p>` : ''}
         </div>
+        <div class="card-actions">
+          <button class="dismiss-btn watched" onclick="event.stopPropagation(); dismissCard(this, ${a.id})">👁 Watched</button>
+          <button class="dismiss-btn not-interested" onclick="event.stopPropagation(); dismissCard(this, ${a.id})">✕ Not Interested</button>
+        </div>
       </div>`;
+  }
+
+  function _iconFor(item) {
+    if (currentCategory === 'any' && item.category) {
+      return (CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.any).cardIcon;
+    }
+    return CATEGORY_CONFIG[currentCategory].cardIcon;
+  }
+
+  function renderCards(items) {
+    if (!items.length) {
+      statusEl.innerHTML = '<p class="status">No results found. Try a different description.</p>';
+      return;
+    }
+
+    window._itemData = {};
+    items.forEach(a => { window._itemData[a.id] = a; });
+
+    const displayed = items.slice(0, currentCount);
+    _reserveItems = items.slice(currentCount);
+
+    const noReserve = _reserveItems.length === 0 ? ' no-reserve' : '';
+
+    resultsEl.innerHTML = displayed.map(a => {
+      const icon = _iconFor(a);
+      return `<div class="card-wrapper${noReserve}" data-item-id="${a.id}">${buildCardHTML(a, icon)}</div>`;
     }).join('');
+  }
+
+  function dismissCard(btnEl, itemId) {
+    if (!_reserveItems.length) return;
+
+    const wrapper = btnEl.closest('.card-wrapper');
+    if (!wrapper || wrapper.classList.contains('flipping')) return;
+
+    const replacement = _reserveItems.shift();
+    window._itemData[replacement.id] = replacement;
+
+    wrapper.classList.add('flipping');
+
+    setTimeout(() => {
+      const icon = _iconFor(replacement);
+      wrapper.dataset.itemId = replacement.id;
+      wrapper.innerHTML = buildCardHTML(replacement, icon);
+      if (!_reserveItems.length) {
+        document.querySelectorAll('.card-wrapper').forEach(w => w.classList.add('no-reserve'));
+      }
+      wrapper.classList.remove('flipping');
+    }, 250);
   }
 
   function renderMarkdown(text) {
@@ -1082,7 +1531,7 @@
   function placeholder() {
     const d = document.createElement('div');
     d.className = 'card-image-placeholder';
-    d.textContent = '🎌';
+    d.textContent = CATEGORY_CONFIG[currentCategory].cardIcon;
     return d;
   }
 </script>
