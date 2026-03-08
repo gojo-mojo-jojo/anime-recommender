@@ -9,4 +9,4 @@ dist/
 .venv/
 ARCHITECTURE.md
 DEEP_DIVE.md
-.vscode/settings.local.json
+.claude/settings.local.json
