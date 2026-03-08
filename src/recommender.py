@@ -1,7 +1,7 @@
 import asyncio
 import json
 import re
-from typing import Any
+from typing import Any, Generator
 
 import anthropic
 from tavily import TavilyClient
@@ -17,9 +17,10 @@ TOOLS: list[dict[str, Any]] = [
     {
         "name": "search_anime_by_genre",
         "description": (
-            "Search MyAnimeList for top-rated anime by genre. "
-            "Returns up to 20 results with title, score, episodes, genres, and synopsis. "
-            "Call this first to discover candidates that match the user's mood."
+            "Search MyAnimeList for anime by genre, sorted by popularity (member count). "
+            "Returns titles, scores, member counts, episodes, genres, and synopsis. "
+            "Call this MULTIPLE TIMES with different genre combinations to build a broad candidate pool. "
+            "Each call uses AND logic so use only 1-2 genres per call."
         ),
         "input_schema": {
             "type": "object",
@@ -28,7 +29,7 @@ TOOLS: list[dict[str, Any]] = [
                     "type": "array",
                     "items": {"type": "string"},
                     "description": (
-                        "Genre names to filter by, e.g. ['action', 'fantasy', 'drama']. "
+                        "1-2 genre names per call. Make multiple calls to cover different angles. "
                         "Supported: action, adventure, comedy, demons, drama, fantasy, historical, "
                         "horror, magic, mecha, mystery, psychological, romance, samurai, school, "
                         "sci-fi, slice of life, space, sports, supernatural, thriller, vampire."
@@ -65,9 +66,10 @@ async def _run_tool(name: str, inputs: dict[str, Any]) -> str:
             {
                 "title": r["title"],
                 "score": r.get("score"),
+                "members": r.get("members"),
                 "episodes": r.get("episodes"),
                 "genres": [g["name"] for g in r.get("genres", [])],
-                "synopsis": (r.get("synopsis") or "")[:300],
+                "synopsis": (r.get("synopsis") or "")[:400],
             }
             for r in results
         ]
@@ -82,7 +84,6 @@ async def _run_tool(name: str, inputs: dict[str, Any]) -> str:
 
 
 def _extract_json(text: str) -> list[dict[str, Any]]:
-    """Pull a JSON array out of Claude's response even if surrounded by prose."""
     match = re.search(r"\[.*\]", text, re.DOTALL)
     if match:
         return json.loads(match.group())
@@ -95,17 +96,21 @@ async def get_recommendations(preferences: str) -> list[Anime]:
             "role": "user",
             "content": (
                 f'Find the best 9 anime for someone with these preferences: "{preferences}"\n\n'
-                "Follow these steps:\n"
-                "1. Call search_anime_by_genre with relevant genres to discover candidates.\n"
-                "2. Call search_reviews for the most promising candidates to read real audience opinions.\n"
-                "3. If the input looks like a title name (even misspelled), include that anime first.\n"
-                "4. Return ONLY a JSON array of exactly 9 objects — no explanation outside the array:\n"
+                "Steps:\n"
+                "1. Call search_anime_by_genre 2-3 times with different genre combinations "
+                "to build a broad candidate pool (e.g. once for the primary genre, once for a related genre).\n"
+                "2. Call search_reviews for the most promising candidates to validate quality.\n"
+                "3. Combine search results WITH your own knowledge of popular, well-known anime — "
+                "do not limit yourself only to what the search returns.\n"
+                "4. If the input looks like a title name (even misspelled), include that anime first.\n"
+                "5. Prefer anime with high member counts (widely watched) and strong scores. "
+                "Avoid very obscure titles unless they are an exceptionally strong match.\n"
+                "6. Return ONLY a JSON array of exactly 9 objects — no text outside the array:\n"
                 '   [{"title": "Full Correct Title", "reason": "one sentence why this fits"}, ...]\n'
             ),
         }
     ]
 
-    # Agentic loop — runs until Claude stops calling tools
     while True:
         response = claude.messages.create(
             model="claude-sonnet-4-6",
@@ -140,7 +145,6 @@ async def get_recommendations(preferences: str) -> list[Anime]:
     if not picks:
         return []
 
-    # Enrich Claude's picks with full Jikan metadata
     anime_list = await asyncio.gather(*[search_anime(p["title"]) for p in picks])
 
     result = []
@@ -150,3 +154,29 @@ async def get_recommendations(preferences: str) -> list[Anime]:
             result.append(anime)
 
     return result
+
+
+def explain_recommendation_stream(
+    preference: str, title: str, synopsis: str, genres: list[str]
+) -> Generator[str, None, None]:
+    with claude.messages.stream(
+        model="claude-sonnet-4-6",
+        max_tokens=250,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    f'A user wants: "{preference}"\n'
+                    f'Anime: "{title}" | Genres: {", ".join(genres)}\n'
+                    f'Synopsis: {synopsis[:400]}\n\n'
+                    "Write a short structured match analysis using exactly this format:\n"
+                    "**Why it matches:** one sentence\n"
+                    "**Tone & style:** one sentence\n"
+                    "**Best for you if:** one sentence\n\n"
+                    "Be specific and concise. No intro, no outro."
+                ),
+            }
+        ],
+    ) as stream:
+        for text in stream.text_stream:
+            yield text

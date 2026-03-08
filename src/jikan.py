@@ -51,7 +51,7 @@ async def search_anime(title: str) -> Anime | None:
 
 async def search_anime_by_genres(genres: list[str], limit: int = 20) -> list[dict[str, Any]]:
     genre_ids = [str(GENRE_IDS[g.lower()]) for g in genres if g.lower() in GENRE_IDS]
-    params: dict[str, Any] = {"limit": limit, "order_by": "score", "sort": "desc", "sfw": "true"}
+    params: dict[str, Any] = {"limit": limit, "order_by": "members", "sort": "desc", "sfw": "true"}
     if genre_ids:
         params["genres"] = ",".join(genre_ids)
     data = await _get(f"{JIKAN_BASE}/anime", params)

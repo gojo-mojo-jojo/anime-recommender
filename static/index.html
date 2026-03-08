@@ -235,6 +235,73 @@
       padding-left: 0.6rem;
       line-height: 1.4;
     }
+
+    .card { cursor: pointer; }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: #13132a;
+      border: 1px solid #3a2a6a;
+      border-radius: 20px;
+      max-width: 560px;
+      width: 100%;
+      overflow: hidden;
+      animation: popIn 0.2s ease;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .modal-image {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      object-position: top;
+      background: #1a1a2e;
+    }
+
+    .modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+
+    .modal-title { font-size: 1.3rem; font-weight: 700; color: #f0e8ff; }
+
+    .modal-meta { display: flex; gap: 1rem; font-size: 0.85rem; color: #7a6a9a; }
+
+    .modal-explanation {
+      font-size: 0.92rem;
+      line-height: 1.7;
+      color: #c4b5fd;
+    }
+
+    .modal-explanation.loading { color: #4a3a6a; font-style: italic; }
+
+    .modal-close {
+      align-self: flex-end;
+      background: #1e1040;
+      border: 1px solid #3a2a6a;
+      border-radius: 8px;
+      color: #a78bfa;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.4rem 1rem;
+    }
+
+    .modal-close:hover { background: #2a1a5a; }
   </style>
 </head>
 <body>
@@ -261,11 +328,107 @@
 <div id="status"></div>
 <div id="results" class="results"></div>
 
+<!-- Modal -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)">
+  <div class="modal">
+    <img id="modal-img" class="modal-image" src="" alt="" />
+    <div class="modal-body">
+      <div id="modal-title" class="modal-title"></div>
+      <div id="modal-meta" class="modal-meta"></div>
+      <div id="modal-explanation" class="modal-explanation loading">Asking Claude why this fits your taste…</div>
+      <button class="modal-close" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const input = document.getElementById('pref-input');
   const btn = document.getElementById('search-btn');
   const statusEl = document.getElementById('status');
   const resultsEl = document.getElementById('results');
+  const backdrop = document.getElementById('modal-backdrop');
+
+  let lastPreference = '';
+  let stepTimer = null;
+
+  const STEPS = [
+    "Identifying genres from your preference…",
+    "Searching anime database on MyAnimeList…",
+    "Reading web reviews for top candidates…",
+    "Ranking the best matches for you…",
+    "Fetching artwork and metadata…",
+  ];
+
+  function startLoadingSteps() {
+    let i = 0;
+    statusEl.innerHTML = `<span class="spinner"></span> ${STEPS[0]}`;
+    stepTimer = setInterval(() => {
+      i = Math.min(i + 1, STEPS.length - 1);
+      statusEl.innerHTML = `<span class="spinner"></span> ${STEPS[i]}`;
+    }, 2500);
+  }
+
+  function stopLoadingSteps() {
+    clearInterval(stepTimer);
+    stepTimer = null;
+    statusEl.innerHTML = '';
+  }
+
+  function openModal(anime) {
+    document.getElementById('modal-title').textContent = anime.title;
+    document.getElementById('modal-meta').innerHTML = [
+      anime.score != null ? `★ ${anime.score.toFixed(1)}` : '',
+      anime.episodes != null ? `📺 ${anime.episodes} ep` : '',
+      anime.genres.join(' · '),
+    ].filter(Boolean).join('&nbsp;&nbsp;');
+
+    const img = document.getElementById('modal-img');
+    if (anime.image_url) {
+      img.src = anime.image_url;
+      img.style.display = 'block';
+    } else {
+      img.style.display = 'none';
+    }
+
+    const expl = document.getElementById('modal-explanation');
+    expl.innerHTML = '';
+    expl.className = 'modal-explanation';
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    fetch('/api/explain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        preference: lastPreference,
+        title: anime.title,
+        synopsis: anime.synopsis,
+        genres: anime.genres,
+      }),
+    })
+      .then(async res => {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          expl.innerHTML = renderMarkdown(buffer);
+        }
+      })
+      .catch(() => {
+        expl.textContent = 'Could not load explanation.';
+      });
+  }
+
+  function closeModal(e) {
+    if (e && e.target !== backdrop) return;
+    backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); getRecommendations(); }
@@ -279,10 +442,11 @@
   async function getRecommendations() {
     const preferences = input.value.trim();
     if (!preferences) return;
+    lastPreference = preferences;
 
     btn.disabled = true;
     resultsEl.innerHTML = '';
-    statusEl.innerHTML = '<span class="spinner"></span> Searching anime database, reading reviews, ranking results…';
+    startLoadingSteps();
 
     try {
       const res = await fetch('/api/recommend', {
@@ -294,9 +458,10 @@
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json();
 
-      statusEl.innerHTML = '';
+      stopLoadingSteps();
       renderCards(data.recommendations);
     } catch (err) {
+      stopLoadingSteps();
       statusEl.innerHTML = `<p class="error">Something went wrong: ${err.message}</p>`;
     } finally {
       btn.disabled = false;
@@ -309,8 +474,12 @@
       return;
     }
 
+    // Store anime data for modal access
+    window._animeData = {};
+    anime.forEach(a => { window._animeData[a.id] = a; });
+
     resultsEl.innerHTML = anime.map(a => `
-      <div class="card">
+      <div class="card" onclick="openModal(window._animeData[${a.id}])">
         ${a.image_url
           ? `<img class="card-image" src="${a.image_url}" alt="${escHtml(a.title)}" loading="lazy" onerror="this.replaceWith(placeholder())">`
           : `<div class="card-image-placeholder">🎌</div>`}
@@ -328,6 +497,12 @@
         </div>
       </div>
     `).join('');
+  }
+
+  function renderMarkdown(text) {
+    return escHtml(text)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
   }
 
   function escHtml(str) {

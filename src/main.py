@@ -1,11 +1,11 @@
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings
-from .models import RecommendRequest, RecommendResponse
-from .recommender import get_recommendations
+from .models import ExplainRequest, RecommendRequest, RecommendResponse
+from .recommender import explain_recommendation_stream, get_recommendations
 
 app = FastAPI(title="Anime Recommender", version="0.1.0")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -23,6 +23,14 @@ async def recommend(body: RecommendRequest) -> RecommendResponse:
         return RecommendResponse(recommendations=anime_list)
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Failed to get recommendations") from exc
+
+
+@app.post("/api/explain")
+async def explain(body: ExplainRequest) -> StreamingResponse:
+    return StreamingResponse(
+        explain_recommendation_stream(body.preference, body.title, body.synopsis, body.genres),
+        media_type="text/plain",
+    )
 
 
 if __name__ == "__main__":

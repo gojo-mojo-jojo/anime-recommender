@@ -18,3 +18,10 @@ class RecommendRequest(BaseModel):
 
 class RecommendResponse(BaseModel):
     recommendations: list[Anime]
+
+
+class ExplainRequest(BaseModel):
+    preference: str
+    title: str
+    synopsis: str
+    genres: list[str]
