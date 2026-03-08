@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anime-recommender"
+version = "0.1.0"
+description = "AI-powered anime recommender using Claude and Jikan API"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.39.0",
+    "tavily-python>=0.7.0",
+    "fastapi>=0.111.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "uvicorn[standard]>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-mock>=3.14.0",
+    "httpx>=0.27.0",
+    "respx>=0.21.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

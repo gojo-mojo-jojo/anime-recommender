@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anime Recommender</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d14;
+      color: #e0e0f0;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 3rem 1rem 1.5rem;
+      background: linear-gradient(180deg, #1a0a2e 0%, #0d0d14 100%);
+      border-bottom: 1px solid #2a1a4a;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      margin-top: 0.5rem;
+      color: #8878aa;
+      font-size: 0.95rem;
+    }
+
+    .search-section {
+      max-width: 720px;
+      margin: 2.5rem auto 0;
+      padding: 0 1rem;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    textarea {
+      flex: 1;
+      background: #1a1a2e;
+      border: 1px solid #2e2e50;
+      border-radius: 12px;
+      color: #e0e0f0;
+      font-size: 1rem;
+      padding: 0.85rem 1rem;
+      resize: none;
+      height: 56px;
+      line-height: 1.5;
+      transition: border-color 0.2s, height 0.2s;
+      font-family: inherit;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #a78bfa;
+      height: 100px;
+    }
+
+    textarea::placeholder { color: #4a3a6a; }
+
+    button#search-btn {
+      background: linear-gradient(135deg, #7c3aed, #db2777);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0 1.5rem;
+      height: 56px;
+      white-space: nowrap;
+      transition: opacity 0.2s, transform 0.1s;
+      align-self: flex-start;
+    }
+
+    button#search-btn:hover { opacity: 0.9; }
+    button#search-btn:active { transform: scale(0.97); }
+    button#search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .examples {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .example-chip {
+      background: #1a1a2e;
+      border: 1px solid #2e2e50;
+      border-radius: 20px;
+      color: #8878aa;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.8rem;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .example-chip:hover { border-color: #a78bfa; color: #a78bfa; }
+
+    .status {
+      text-align: center;
+      margin-top: 3rem;
+      color: #6a5a8a;
+      font-size: 0.95rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #3a2a5a;
+      border-top-color: #a78bfa;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error {
+      color: #f87171;
+      text-align: center;
+      margin-top: 3rem;
+    }
+
+    .results {
+      max-width: 960px;
+      margin: 2.5rem auto 4rem;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: #13132a;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover { transform: translateY(-4px); border-color: #7c3aed; }
+
+    .card-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: #1a1a2e;
+    }
+
+    .card-image-placeholder {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #1a0a2e, #2a1a4e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #3a2a5a;
+      font-size: 3rem;
+    }
+
+    .card-body {
+      padding: 1rem 1.1rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      flex: 1;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f0e8ff;
+      line-height: 1.3;
+    }
+
+    .card-meta {
+      display: flex;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      color: #7a6a9a;
+    }
+
+    .card-meta span { display: flex; align-items: center; gap: 0.25rem; }
+
+    .score { color: #fbbf24; }
+
+    .genres {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .genre-tag {
+      background: #1e1040;
+      border: 1px solid #3a2a6a;
+      border-radius: 20px;
+      color: #a78bfa;
+      font-size: 0.72rem;
+      padding: 0.2rem 0.6rem;
+    }
+
+    .synopsis {
+      font-size: 0.82rem;
+      color: #7a6a9a;
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .reason {
+      font-size: 0.8rem;
+      color: #c4b5fd;
+      font-style: italic;
+      border-left: 2px solid #7c3aed;
+      padding-left: 0.6rem;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Anime Recommender</h1>
+  <p>Describe what you're in the mood for — We will find the perfect match.</p>
+</header>
+
+<div class="search-section">
+  <div class="search-box">
+    <textarea id="pref-input" placeholder="e.g. dark fantasy with complex characters and slow world-building..."></textarea>
+    <button id="search-btn" onclick="getRecommendations()">Recommend</button>
+  </div>
+  <div class="examples">
+    <span class="example-chip" onclick="useExample(this)">dark fantasy, morally grey</span>
+    <span class="example-chip" onclick="useExample(this)">cozy slice of life, emotional</span>
+    <span class="example-chip" onclick="useExample(this)">mecha, epic battles</span>
+    <span class="example-chip" onclick="useExample(this)">psychological thriller</span>
+    <span class="example-chip" onclick="useExample(this)">romance, high school</span>
+  </div>
+</div>
+
+<div id="status"></div>
+<div id="results" class="results"></div>
+
+<script>
+  const input = document.getElementById('pref-input');
+  const btn = document.getElementById('search-btn');
+  const statusEl = document.getElementById('status');
+  const resultsEl = document.getElementById('results');
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); getRecommendations(); }
+  });
+
+  function useExample(el) {
+    input.value = el.textContent;
+    input.focus();
+  }
+
+  async function getRecommendations() {
+    const preferences = input.value.trim();
+    if (!preferences) return;
+
+    btn.disabled = true;
+    resultsEl.innerHTML = '';
+    statusEl.innerHTML = '<span class="spinner"></span> Searching anime database, reading reviews, ranking results…';
+
+    try {
+      const res = await fetch('/api/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preferences }),
+      });
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const data = await res.json();
+
+      statusEl.innerHTML = '';
+      renderCards(data.recommendations);
+    } catch (err) {
+      statusEl.innerHTML = `<p class="error">Something went wrong: ${err.message}</p>`;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function renderCards(anime) {
+    if (!anime.length) {
+      statusEl.innerHTML = '<p class="status">No results found. Try a different description.</p>';
+      return;
+    }
+
+    resultsEl.innerHTML = anime.map(a => `
+      <div class="card">
+        ${a.image_url
+          ? `<img class="card-image" src="${a.image_url}" alt="${escHtml(a.title)}" loading="lazy" onerror="this.replaceWith(placeholder())">`
+          : `<div class="card-image-placeholder">🎌</div>`}
+        <div class="card-body">
+          <div class="card-title">${escHtml(a.title)}</div>
+          <div class="card-meta">
+            ${a.score != null ? `<span class="score">★ ${a.score.toFixed(1)}</span>` : ''}
+            ${a.episodes != null ? `<span>📺 ${a.episodes} ep</span>` : ''}
+          </div>
+          <div class="genres">
+            ${a.genres.map(g => `<span class="genre-tag">${escHtml(g)}</span>`).join('')}
+          </div>
+          ${a.reason ? `<p class="reason">${escHtml(a.reason)}</p>` : ''}
+          ${a.synopsis ? `<p class="synopsis">${escHtml(a.synopsis)}</p>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function placeholder() {
+    const d = document.createElement('div');
+    d.className = 'card-image-placeholder';
+    d.textContent = '🎌';
+    return d;
+  }
+</script>
+</body>
+</html>
