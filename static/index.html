@@ -110,6 +110,55 @@
 
     .example-chip:hover { border-color: #a78bfa; color: #a78bfa; }
 
+    .mode-toggle {
+      display: flex;
+      justify-content: center;
+      margin-top: 0.9rem;
+      gap: 0;
+    }
+
+    .mode-btn {
+      background: #1a1a2e;
+      border: 1px solid #2e2e50;
+      color: #6a5a8a;
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 0.4rem 1.1rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      position: relative;
+    }
+
+    .mode-btn:first-child {
+      border-radius: 20px 0 0 20px;
+      border-right: none;
+    }
+
+    .mode-btn:last-child {
+      border-radius: 0 20px 20px 0;
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, #7c3aed22, #db277722);
+      border-color: #7c3aed;
+      color: #e0d0ff;
+    }
+
+    .mode-btn:last-child.active {
+      border-left-color: #7c3aed;
+    }
+
+    .mode-btn:not(.active):hover {
+      border-color: #4a3a6a;
+      color: #a090c0;
+    }
+
+    .mode-icon {
+      margin-right: 0.35rem;
+      font-size: 0.9rem;
+    }
+
     .status {
       text-align: center;
       margin-top: 3rem;
@@ -217,6 +266,15 @@
       padding: 0.2rem 0.6rem;
     }
 
+    .theme-tag {
+      background: #0e1a2a;
+      border: 1px solid #1a3a5a;
+      border-radius: 20px;
+      color: #60a5fa;
+      font-size: 0.72rem;
+      padding: 0.2rem 0.6rem;
+    }
+
     .synopsis {
       font-size: 0.82rem;
       color: #7a6a9a;
@@ -302,6 +360,343 @@
     }
 
     .modal-close:hover { background: #2a1a5a; }
+
+    /* ── Loading scene ── */
+    .loading-scene {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 3rem;
+      padding: 1.5rem 0 0;
+    }
+
+    .scene-stage {
+      position: relative;
+      width: 240px;
+      height: 130px;
+    }
+
+    /* Chibi character — common */
+    .chibi-char {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: chibi-hop 1.1s ease-in-out infinite;
+    }
+
+    .chibi-head { position: relative; animation: squash 1.1s ease-in-out infinite; }
+
+    .chibi-face {
+      width: 46px; height: 42px;
+      background: #fde4d2;
+      border-radius: 50%;
+      position: relative; z-index: 2;
+    }
+
+    .c-eye {
+      position: absolute; width: 5px; height: 7px;
+      border-radius: 50%; top: 16px;
+      animation: blink 3.5s ease-in-out infinite;
+    }
+    .c-eye.l { left: 12px; }
+    .c-eye.r { right: 12px; }
+
+    .c-blush {
+      position: absolute; top: 22px;
+      width: 8px; height: 5px;
+      background: rgba(255,140,140,0.4);
+      border-radius: 50%; z-index: 3;
+    }
+    .c-blush.l { left: 4px; }
+    .c-blush.r { right: 4px; }
+
+    .c-mouth {
+      position: absolute; bottom: 10px; left: 50%;
+      transform: translateX(-50%);
+      width: 6px; height: 3px;
+      border-bottom: 2px solid #d4a0a0;
+      border-radius: 0 0 50% 50%;
+    }
+
+    .chibi-outfit {
+      width: 32px; height: 18px;
+      border-radius: 4px 4px 6px 6px;
+      margin-top: -2px;
+    }
+
+    .chibi-shadow {
+      width: 38px; height: 7px;
+      background: rgba(120,80,180,0.12);
+      border-radius: 50%; margin-top: 3px;
+      animation: shadow-scale 1.1s ease-in-out infinite;
+    }
+
+    .chibi-hair {
+      position: absolute; top: -3px; left: -3px; right: -3px;
+      height: 24px; border-radius: 50% 50% 0 0; z-index: 3;
+    }
+
+    /* ── Anya Forger ── */
+    .hair-anya { background: #f7a8b8; }
+    .hair-anya::before, .hair-anya::after {
+      content: ''; position: absolute;
+      width: 12px; height: 14px;
+      background: #f7a8b8; border-radius: 50%; top: -8px;
+    }
+    .hair-anya::before { left: 6px; }
+    .hair-anya::after { right: 6px; }
+
+    /* ── Mikasa Ackerman ── */
+    .hair-mikasa { background: #1a1a2e; }
+    .hair-mikasa::before, .hair-mikasa::after {
+      content: ''; position: absolute;
+      width: 7px; height: 18px;
+      background: #1a1a2e; border-radius: 0 0 3px 3px; bottom: -14px;
+    }
+    .hair-mikasa::before { left: 0; }
+    .hair-mikasa::after { right: 0; }
+
+    .chibi-scarf {
+      position: absolute; bottom: -4px; left: 50%;
+      transform: translateX(-50%);
+      width: 52px; height: 7px;
+      background: #dc2626; border-radius: 3px; z-index: 4;
+    }
+
+    /* ── Goku ── */
+    .hair-goku { background: #1a1a2e; top: -2px; }
+    .hair-goku::before {
+      content: ''; position: absolute;
+      top: -20px; left: -6px; right: -6px; height: 26px;
+      background: #1a1a2e;
+      clip-path: polygon(
+        0% 100%, 5% 45%, 18% 100%, 22% 18%, 38% 100%,
+        50% 0%, 62% 100%, 78% 18%, 82% 100%, 95% 45%, 100% 100%
+      );
+    }
+
+    /* ── Edward Elric ── */
+    .hair-edward { background: #fbbf24; }
+    .hair-edward::before {
+      content: ''; position: absolute;
+      top: -14px; left: 50%; transform: translateX(-50%) rotate(5deg);
+      width: 3px; height: 16px;
+      background: #fbbf24; border-radius: 2px;
+    }
+    .hair-edward::after {
+      content: ''; position: absolute;
+      right: -1px; bottom: -16px;
+      width: 5px; height: 18px;
+      background: #fbbf24; border-radius: 0 0 3px 3px;
+    }
+
+    /* ── Zero Two ── */
+    .hair-zerotwo { background: #f472b6; }
+    .hair-zerotwo::before, .hair-zerotwo::after {
+      content: ''; position: absolute;
+      bottom: -18px; width: 6px; height: 20px;
+      background: #f472b6; border-radius: 0 0 3px 3px;
+    }
+    .hair-zerotwo::before { left: -1px; }
+    .hair-zerotwo::after { right: -1px; }
+
+    .chibi-horns {
+      position: absolute; top: -5px; left: 50%;
+      transform: translateX(-50%);
+      width: 34px; display: flex;
+      justify-content: space-between; z-index: 5;
+    }
+    .horn {
+      width: 6px; height: 10px;
+      background: #ef4444; border-radius: 50% 50% 20% 20%;
+    }
+    .horn.l { transform: rotate(-15deg); }
+    .horn.r { transform: rotate(15deg); }
+
+    .loading-quote {
+      font-size: 0.85rem; color: #8878aa;
+      font-style: italic; text-align: center;
+    }
+
+    @keyframes chibi-hop {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      45% { transform: translateX(-50%) translateY(-24px); }
+    }
+
+    @keyframes squash {
+      0%, 100% { transform: scaleX(1) scaleY(1); }
+      20% { transform: scaleX(0.94) scaleY(1.08); }
+      45% { transform: scaleX(1) scaleY(1); }
+      80% { transform: scaleX(1.1) scaleY(0.9); }
+    }
+
+    @keyframes shadow-scale {
+      0%, 100% { transform: scaleX(1); opacity: 0.25; }
+      45% { transform: scaleX(0.6); opacity: 0.1; }
+    }
+
+    @keyframes blink {
+      0%, 40%, 44%, 100% { transform: scaleY(1); }
+      42% { transform: scaleY(0.1); }
+    }
+
+    /* Sparkles around mochi */
+    .sparkle {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .sparkle::before, .sparkle::after {
+      content: '';
+      position: absolute;
+      background: inherit;
+      border-radius: 50%;
+    }
+
+    .sparkle::before {
+      width: 5px; height: 2px;
+      top: 1.5px; left: 0;
+    }
+
+    .sparkle::after {
+      width: 2px; height: 5px;
+      top: 0; left: 1.5px;
+    }
+
+    .sparkle.s1 { top: 10px; left: 30px; background: #a78bfa; animation: twinkle 2s 0s ease-in-out infinite; }
+    .sparkle.s2 { top: 30px; right: 30px; background: #f472b6; animation: twinkle 2s 0.5s ease-in-out infinite; }
+    .sparkle.s3 { top: 50px; left: 20px; background: #60a5fa; animation: twinkle 2s 1s ease-in-out infinite; }
+    .sparkle.s4 { top: 15px; right: 50px; background: #fbbf24; animation: twinkle 2s 1.4s ease-in-out infinite; }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1) rotate(45deg); }
+    }
+
+    /* Sakura petals */
+    .petal {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: rgba(244, 114, 182, 0.5);
+      border-radius: 50% 0 50% 0;
+      animation: petal-fall linear infinite;
+    }
+
+    @keyframes petal-fall {
+      0% { transform: translateY(-10px) translateX(0) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.7; }
+      90% { opacity: 0.7; }
+      100% { transform: translateY(130px) translateX(30px) rotate(320deg); opacity: 0; }
+    }
+
+    /* Kaomoji + step text */
+    .loading-kaomoji {
+      font-size: 1.3rem;
+      color: #c4b5fd;
+      animation: kaomoji-pulse 2s ease-in-out infinite;
+      min-height: 1.6em;
+    }
+
+    @keyframes kaomoji-pulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    .loading-step {
+      color: #6a5a8a;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* ── Modal loading ── */
+    .modal-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0;
+    }
+
+    .mini-chibi {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: mini-hop 0.9s ease-in-out infinite;
+    }
+
+    .mini-head { position: relative; animation: mini-squash 0.9s ease-in-out infinite; }
+
+    .mini-hair-dome {
+      position: absolute; top: -2px; left: -2px; right: -2px;
+      height: 14px; border-radius: 50% 50% 0 0; z-index: 1;
+    }
+
+    .mini-face {
+      width: 28px; height: 26px;
+      background: #fde4d2; border-radius: 50%;
+      position: relative; z-index: 2;
+    }
+
+    .m-eye {
+      position: absolute; width: 3px; height: 4px;
+      border-radius: 50%; top: 11px;
+      animation: blink 4s ease-in-out infinite;
+    }
+    .m-eye.l { left: 8px; }
+    .m-eye.r { right: 8px; }
+
+    .mini-outfit {
+      width: 20px; height: 10px;
+      border-radius: 2px 2px 4px 4px; margin-top: -1px;
+    }
+
+    .mini-shad {
+      width: 22px; height: 4px;
+      background: rgba(120,80,180,0.1);
+      border-radius: 50%; margin-top: 2px;
+      animation: shadow-scale 0.9s ease-in-out infinite;
+    }
+
+    @keyframes mini-hop {
+      0%, 100% { transform: translateY(0); }
+      45% { transform: translateY(-12px); }
+    }
+
+    @keyframes mini-squash {
+      0%, 100% { transform: scaleX(1) scaleY(1); }
+      80% { transform: scaleX(1.08) scaleY(0.92); }
+    }
+
+    .modal-loading-sparkles {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .ml-sparkle {
+      font-size: 0.75rem;
+      animation: twinkle 1.2s ease-in-out infinite;
+    }
+
+    .ml-sparkle:nth-child(1) { color: #a78bfa; animation-delay: 0s; }
+    .ml-sparkle:nth-child(2) { color: #f472b6; animation-delay: 0.25s; }
+    .ml-sparkle:nth-child(3) { color: #60a5fa; animation-delay: 0.5s; }
+    .ml-sparkle:nth-child(4) { color: #fbbf24; animation-delay: 0.75s; }
+
+    .modal-loading-text {
+      color: #7a6a9a;
+      font-size: 0.82rem;
+      font-style: italic;
+      animation: kaomoji-pulse 2.5s ease-in-out infinite;
+    }
   </style>
 </head>
 <body>
@@ -315,6 +710,14 @@
   <div class="search-box">
     <textarea id="pref-input" placeholder="e.g. dark fantasy with complex characters and slow world-building..."></textarea>
     <button id="search-btn" onclick="getRecommendations()">Recommend</button>
+  </div>
+  <div class="mode-toggle">
+    <button class="mode-btn active" data-mode="personalized" onclick="setMode(this)">
+      <span class="mode-icon">🎯</span>Personalized Match
+    </button>
+    <button class="mode-btn" data-mode="trending" onclick="setMode(this)">
+      <span class="mode-icon">🔥</span>Trending & Popular
+    </button>
   </div>
   <div class="examples">
     <span class="example-chip" onclick="useExample(this)">dark fantasy, morally grey</span>
@@ -349,7 +752,15 @@
   const backdrop = document.getElementById('modal-backdrop');
 
   let lastPreference = '';
+  let currentMode = 'personalized';
   let stepTimer = null;
+  let kaomojiTimer = null;
+
+  function setMode(el) {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    currentMode = el.dataset.mode;
+  }
 
   const STEPS = [
     "Identifying genres from your preference…",
@@ -359,28 +770,164 @@
     "Fetching artwork and metadata…",
   ];
 
+  const KAOMOJI = [
+    '(ﾉ◕ヮ◕)ﾉ*:・ﾟ✧',
+    '٩(◕‿◕｡)۶',
+    '(づ￣ ³￣)づ',
+    '☆*:.｡.o(≧▽≦)o.｡.:*☆',
+    '(ノ´ヮ`)ノ*: ・ﾟ✧',
+    '(◠‿◠)',
+    '(*≧ω≦)',
+    '(✧ω✧)',
+    'ヾ(＾∇＾)',
+    '(⌐■_■)',
+  ];
+
+  const MODAL_MSGS = [
+    'Consulting the anime scrolls…',
+    'Channeling inner otaku energy…',
+    'Reading between the frames…',
+    'Analyzing character arcs…',
+    'Decoding the plot threads…',
+  ];
+
+  const CHARACTERS = [
+    {
+      name: 'Anya', hair: 'anya', hairColor: '#f7a8b8',
+      eyeColor: '#4ade80', outfitColor: '#1a1a3e',
+      blush: true, accessory: '',
+      quote: 'Anya is using her telepathy to find your anime!',
+    },
+    {
+      name: 'Mikasa', hair: 'mikasa', hairColor: '#1a1a2e',
+      eyeColor: '#1f2937', outfitColor: '#4a3a2a',
+      blush: false, accessory: 'scarf',
+      quote: 'Mikasa is scouting the best recommendations…',
+    },
+    {
+      name: 'Goku', hair: 'goku', hairColor: '#1a1a2e',
+      eyeColor: '#1f2937', outfitColor: '#f97316',
+      blush: false, accessory: '',
+      quote: 'Goku is powering up your recommendations!',
+    },
+    {
+      name: 'Edward', hair: 'edward', hairColor: '#fbbf24',
+      eyeColor: '#f59e0b', outfitColor: '#dc2626',
+      blush: false, accessory: '',
+      quote: 'Equivalent exchange: your taste for great anime!',
+    },
+    {
+      name: 'Zero Two', hair: 'zerotwo', hairColor: '#f472b6',
+      eyeColor: '#22d3ee', outfitColor: '#ef4444',
+      blush: true, accessory: 'horns',
+      quote: 'Darling, finding the perfect anime for you…',
+    },
+  ];
+
+  const sessionChar = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
+
+  function buildCharacter(c) {
+    const blush = c.blush
+      ? '<div class="c-blush l"></div><div class="c-blush r"></div>' : '';
+    let acc = '';
+    if (c.accessory === 'scarf') acc = '<div class="chibi-scarf"></div>';
+    if (c.accessory === 'horns')
+      acc = '<div class="chibi-horns"><div class="horn l"></div><div class="horn r"></div></div>';
+
+    return `
+      <div class="chibi-char">
+        <div class="chibi-head">
+          <div class="chibi-hair hair-${c.hair}"></div>
+          ${acc}
+          <div class="chibi-face">
+            <div class="c-eye l" style="background:${c.eyeColor}"></div>
+            <div class="c-eye r" style="background:${c.eyeColor}"></div>
+            ${blush}
+            <div class="c-mouth"></div>
+          </div>
+        </div>
+        <div class="chibi-outfit" style="background:${c.outfitColor}"></div>
+        <div class="chibi-shadow"></div>
+      </div>`;
+  }
+
+  function buildMiniChar(c) {
+    return `
+      <div class="mini-chibi">
+        <div class="mini-head">
+          <div class="mini-hair-dome" style="background:${c.hairColor}"></div>
+          <div class="mini-face">
+            <div class="m-eye l" style="background:${c.eyeColor}"></div>
+            <div class="m-eye r" style="background:${c.eyeColor}"></div>
+          </div>
+        </div>
+        <div class="mini-outfit" style="background:${c.outfitColor}"></div>
+        <div class="mini-shad"></div>
+      </div>`;
+  }
+
+  function buildPetals() {
+    let html = '';
+    for (let i = 0; i < 7; i++) {
+      const left = Math.random() * 220;
+      const dur = 2.5 + Math.random() * 2;
+      const delay = Math.random() * 3;
+      const size = 6 + Math.random() * 5;
+      html += `<div class="petal" style="left:${left}px;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s"></div>`;
+    }
+    return html;
+  }
+
   function startLoadingSteps() {
-    let i = 0;
-    statusEl.innerHTML = `<span class="spinner"></span> ${STEPS[0]}`;
+    let stepIdx = 0;
+    let kIdx = 0;
+
+    statusEl.innerHTML = `
+      <div class="loading-scene">
+        <div class="scene-stage">
+          ${buildPetals()}
+          <div class="sparkle s1"></div>
+          <div class="sparkle s2"></div>
+          <div class="sparkle s3"></div>
+          <div class="sparkle s4"></div>
+          ${buildCharacter(sessionChar)}
+        </div>
+        <div class="loading-quote">${sessionChar.quote}</div>
+        <div class="loading-kaomoji" id="kaomoji-text">${KAOMOJI[0]}</div>
+        <div class="loading-step"><span class="spinner"></span> <span id="step-text">${STEPS[0]}</span></div>
+      </div>`;
+
     stepTimer = setInterval(() => {
-      i = Math.min(i + 1, STEPS.length - 1);
-      statusEl.innerHTML = `<span class="spinner"></span> ${STEPS[i]}`;
+      stepIdx = Math.min(stepIdx + 1, STEPS.length - 1);
+      const el = document.getElementById('step-text');
+      if (el) el.textContent = STEPS[stepIdx];
     }, 2500);
+
+    kaomojiTimer = setInterval(() => {
+      kIdx = (kIdx + 1) % KAOMOJI.length;
+      const el = document.getElementById('kaomoji-text');
+      if (el) el.textContent = KAOMOJI[kIdx];
+    }, 1800);
   }
 
   function stopLoadingSteps() {
     clearInterval(stepTimer);
+    clearInterval(kaomojiTimer);
     stepTimer = null;
+    kaomojiTimer = null;
     statusEl.innerHTML = '';
   }
 
   function openModal(anime) {
     document.getElementById('modal-title').textContent = anime.title;
-    document.getElementById('modal-meta').innerHTML = [
+    const modalParts = [
       anime.score != null ? `★ ${anime.score.toFixed(1)}` : '',
-      anime.episodes != null ? `📺 ${anime.episodes} ep` : '',
+      anime.year ? `${anime.year}` : '',
+      anime.episodes != null ? `${anime.episodes} ep` : '',
+      anime.studio ? anime.studio : '',
       anime.genres.join(' · '),
-    ].filter(Boolean).join('&nbsp;&nbsp;');
+    ];
+    document.getElementById('modal-meta').innerHTML = modalParts.filter(Boolean).join('&nbsp;&nbsp;·&nbsp;&nbsp;');
 
     const img = document.getElementById('modal-img');
     if (anime.image_url) {
@@ -391,10 +938,26 @@
     }
 
     const expl = document.getElementById('modal-explanation');
-    expl.innerHTML = '';
+    const msgIdx = Math.floor(Math.random() * MODAL_MSGS.length);
+    expl.innerHTML = `
+      <div class="modal-loading">
+        ${buildMiniChar(sessionChar)}
+        <div class="modal-loading-sparkles">
+          <span class="ml-sparkle">✦</span>
+          <span class="ml-sparkle">✦</span>
+          <span class="ml-sparkle">✦</span>
+          <span class="ml-sparkle">✦</span>
+        </div>
+        <div class="modal-loading-text">${MODAL_MSGS[msgIdx]}</div>
+      </div>`;
     expl.className = 'modal-explanation';
     backdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
+
+    let modalMsgTimer = setInterval(() => {
+      const txt = expl.querySelector('.modal-loading-text');
+      if (txt) txt.textContent = MODAL_MSGS[Math.floor(Math.random() * MODAL_MSGS.length)];
+    }, 2000);
 
     fetch('/api/explain', {
       method: 'POST',
@@ -407,6 +970,7 @@
       }),
     })
       .then(async res => {
+        clearInterval(modalMsgTimer);
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
@@ -418,6 +982,7 @@
         }
       })
       .catch(() => {
+        clearInterval(modalMsgTimer);
         expl.textContent = 'Could not load explanation.';
       });
   }
@@ -452,7 +1017,7 @@
       const res = await fetch('/api/recommend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ preferences }),
+        body: JSON.stringify({ preferences, mode: currentMode }),
       });
 
       if (!res.ok) throw new Error(`Server error ${res.status}`);
@@ -478,25 +1043,30 @@
     window._animeData = {};
     anime.forEach(a => { window._animeData[a.id] = a; });
 
-    resultsEl.innerHTML = anime.map(a => `
+    resultsEl.innerHTML = anime.map(a => {
+      const metaParts = [];
+      if (a.score != null) metaParts.push(`<span class="score">★ ${a.score.toFixed(1)}</span>`);
+      if (a.year) metaParts.push(`<span>${a.year}</span>`);
+      if (a.episodes != null) metaParts.push(`<span>${a.episodes} ep</span>`);
+      if (a.studio) metaParts.push(`<span>${escHtml(a.studio)}</span>`);
+
+      const tags = a.genres.map(g => `<span class="genre-tag">${escHtml(g)}</span>`);
+      if (a.themes) tags.push(...a.themes.map(t => `<span class="theme-tag">${escHtml(t)}</span>`));
+
+      return `
       <div class="card" onclick="openModal(window._animeData[${a.id}])">
         ${a.image_url
           ? `<img class="card-image" src="${a.image_url}" alt="${escHtml(a.title)}" loading="lazy" onerror="this.replaceWith(placeholder())">`
           : `<div class="card-image-placeholder">🎌</div>`}
         <div class="card-body">
           <div class="card-title">${escHtml(a.title)}</div>
-          <div class="card-meta">
-            ${a.score != null ? `<span class="score">★ ${a.score.toFixed(1)}</span>` : ''}
-            ${a.episodes != null ? `<span>📺 ${a.episodes} ep</span>` : ''}
-          </div>
-          <div class="genres">
-            ${a.genres.map(g => `<span class="genre-tag">${escHtml(g)}</span>`).join('')}
-          </div>
+          <div class="card-meta">${metaParts.join('')}</div>
+          <div class="genres">${tags.join('')}</div>
           ${a.reason ? `<p class="reason">${escHtml(a.reason)}</p>` : ''}
           ${a.synopsis ? `<p class="synopsis">${escHtml(a.synopsis)}</p>` : ''}
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 
   function renderMarkdown(text) {

@@ -39,28 +39,35 @@ pytest -k "test_search_anime_returns_none"
 
 ## Architecture
 
-The app is a single-endpoint FastAPI service. The request flow is:
+The app is a multi-endpoint FastAPI service. The request flow is:
 
 ```
 POST /api/recommend  →  recommender.get_recommendations()
                           │
-                          ├─ Claude API: infers 5 anime titles from free-text preferences
+                          ├─ Claude API (async, tool use): infers 9 anime titles
+                          │    ├─ search_anime_by_genre tool × 3-4 (Jikan API)
+                          │    └─ search_reviews tool × 2-3 (Tavily API)
                           │
-                          └─ jikan.search_anime() × 5 (concurrent via asyncio.gather)
+                          └─ jikan.search_anime() × 9 (concurrent via asyncio.gather)
                                │
-                               └─ Returns enriched Anime objects
+                               └─ Returns enriched Anime objects (with in-memory LRU cache)
+
+POST /api/explain    →  recommender.explain_recommendation_stream()
+                          │
+                          └─ Claude API (async streaming): returns match analysis
 ```
 
 Key files:
-- `src/main.py` — FastAPI app and route definition
-- `src/recommender.py` — orchestrates Claude + Jikan calls
-- `src/jikan.py` — async Jikan API client
-- `src/models.py` — Pydantic models (`Anime`, `RecommendRequest`, `RecommendResponse`)
+- `src/main.py` — FastAPI app, routes, lifespan, in-memory cache
+- `src/recommender.py` — orchestrates async Claude + Jikan + Tavily calls
+- `src/jikan.py` — async Jikan API client with connection pooling and rate limiting
+- `src/models.py` — Pydantic models (`Anime`, `RecommendRequest`, `RecommendResponse`, `ExplainRequest`)
 - `src/config.py` — settings loaded from `.env` via `pydantic-settings`
+- `static/index.html` — frontend SPA with card grid and streaming explanation modal
 
 ## Environment
 
-Copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY`. The app will fail to start without it.
+Copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY` and `TAVILY_API_KEY`. The app will fail to start without them.
 
 ## Testing
 
