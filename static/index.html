@@ -19,6 +19,7 @@
       padding: 3rem 1rem 1.5rem;
       background: linear-gradient(180deg, #1a0a2e 0%, #0d0d14 100%);
       border-bottom: 1px solid #2a1a4a;
+      position: relative;
     }
 
     header h1 {
@@ -140,6 +141,71 @@
     }
 
     .example-chip:hover { border-color: #a78bfa; color: #a78bfa; }
+
+    .platform-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .platform-row-label {
+      font-size: 0.75rem;
+      color: #5a4a7a;
+      font-weight: 500;
+      margin-right: 0.1rem;
+    }
+
+    .region-selector {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .region-selector select {
+      background: #1a1a2e;
+      border: 1px solid #2e2e50;
+      border-radius: 8px;
+      color: #c4b5fd;
+      font-size: 0.78rem;
+      font-family: inherit;
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236a5a8a'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      padding-right: 1.5rem;
+    }
+
+    .region-selector select:hover { border-color: #7c3aed; }
+    .region-selector select:focus { outline: none; border-color: #a78bfa; }
+
+    .platform-chip {
+      background: #1a1a2e;
+      border: 1px solid #2e2e50;
+      border-radius: 20px;
+      color: #5a4a7a;
+      cursor: pointer;
+      font-size: 0.78rem;
+      padding: 0.28rem 0.75rem;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .platform-chip:hover { border-color: #7c3aed; color: #a78bfa; }
+
+    .platform-chip.active {
+      background: #2a1a4a;
+      border-color: #7c3aed;
+      color: #c4b5fd;
+    }
 
     .mode-toggle {
       display: flex;
@@ -621,6 +687,8 @@
       font-size: 0.72rem;
       color: #c4b5fd;
       transition: border-color 0.2s;
+      text-decoration: none;
+      cursor: pointer;
     }
 
     .provider-badge:hover { border-color: #7c3aed; }
@@ -657,6 +725,24 @@
     }
 
     .modal-close:hover { background: #2a1a5a; }
+
+    .watch-now-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #7c3aed, #db2777);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.55rem 1.25rem;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .watch-now-btn:hover { opacity: 0.88; transform: translateY(-1px); }
 
     /* ── Loading scene ── */
     .loading-scene {
@@ -1001,6 +1087,21 @@
 <header>
   <h1>Watch My Show</h1>
   <p>Describe what you're in the mood for — We will find the perfect match.</p>
+  <div class="region-selector">
+    <span class="platform-row-label">Region:</span>
+    <select id="region-select" onchange="changeRegion(this.value)">
+      <option value="IN">India</option>
+      <option value="US">United States</option>
+      <option value="GB">United Kingdom</option>
+      <option value="CA">Canada</option>
+      <option value="AU">Australia</option>
+      <option value="DE">Germany</option>
+      <option value="FR">France</option>
+      <option value="JP">Japan</option>
+      <option value="BR">Brazil</option>
+      <option value="KR">South Korea</option>
+    </select>
+  </div>
 </header>
 
 <div class="search-section">
@@ -1036,6 +1137,10 @@
       <button class="count-btn" data-count="12" onclick="setCount(this)">12</button>
     </div>
   </div>
+  <div class="platform-row" id="platform-row">
+    <span class="platform-row-label">My Platforms:</span>
+    <div id="platform-chips"></div>
+  </div>
   <div class="examples" id="example-chips"></div>
 </div>
 
@@ -1059,6 +1164,7 @@
       <div id="modal-title" class="modal-title"></div>
       <div id="modal-meta" class="modal-meta"></div>
       <div id="modal-providers" class="provider-bar"></div>
+      <div id="modal-watch-now"></div>
       <div id="modal-explanation" class="modal-explanation loading">Asking Claude why this fits your taste…</div>
       <button class="modal-close" onclick="closeModal()">Close</button>
     </div>
@@ -1066,6 +1172,106 @@
 </div>
 
 <script>
+  const PROVIDER_URLS = {
+    '8':    t => `https://www.netflix.com/search?q=${encodeURIComponent(t)}`,
+    '9':    t => `https://www.primevideo.com/search/ref=atv_nb_sr?phrase=${encodeURIComponent(t)}`,
+    '119':  t => `https://www.primevideo.com/search/ref=atv_nb_sr?phrase=${encodeURIComponent(t)}`,
+    '10':   t => `https://www.amazon.com/s?k=${encodeURIComponent(t)}&i=instant-video`,
+    '15':   t => `https://www.hulu.com/search?q=${encodeURIComponent(t)}`,
+    '337':  t => `https://www.disneyplus.com/search/${encodeURIComponent(t)}`,
+    '120':  t => `https://www.hotstar.com/in/explore?search_query=${encodeURIComponent(t)}`,
+    '122':  t => `https://www.hotstar.com/in/explore?search_query=${encodeURIComponent(t)}`,
+    '390':  t => `https://www.hotstar.com/in/explore?search_query=${encodeURIComponent(t)}`,
+    '2336': t => `https://www.hotstar.com/in/explore?search_query=${encodeURIComponent(t)}`,
+    '350':  t => `https://tv.apple.com/search?term=${encodeURIComponent(t)}`,
+    '531':  t => `https://www.paramountplus.com/search/${encodeURIComponent(t)}/`,
+    '283':  t => `https://www.crunchyroll.com/search?q=${encodeURIComponent(t)}`,
+    '1968': t => `https://www.crunchyroll.com/search?q=${encodeURIComponent(t)}`,
+    '1899': t => `https://www.max.com/search?q=${encodeURIComponent(t)}`,
+    '384':  t => `https://www.max.com/search?q=${encodeURIComponent(t)}`,
+    '2':    t => `https://tv.apple.com/search?term=${encodeURIComponent(t)}`,
+    '232':  t => `https://www.zee5.com/search?q=${encodeURIComponent(t)}`,
+    '237':  t => `https://www.sonyliv.com/search?q=${encodeURIComponent(t)}`,
+    '220':  t => `https://www.jiocinema.com/search/${encodeURIComponent(t)}`,
+  };
+
+  function watchUrl(providerId, title) {
+    const fn = PROVIDER_URLS[String(providerId)];
+    return fn ? fn(title) : null;
+  }
+
+  let platformList = [];
+  let selectedPlatforms = new Set(JSON.parse(localStorage.getItem('wms_platforms') || '[]'));
+  let userRegion = localStorage.getItem('wms_region') || 'IN';
+
+  function initRegionSelect() {
+    const sel = document.getElementById('region-select');
+    sel.value = userRegion;
+    if (!sel.value) {
+      sel.value = 'IN';
+      userRegion = 'IN';
+    }
+  }
+
+  function changeRegion(region) {
+    userRegion = region;
+    localStorage.setItem('wms_region', region);
+    selectedPlatforms.clear();
+    savePlatforms();
+    loadPlatforms();
+  }
+
+  function savePlatforms() {
+    localStorage.setItem('wms_platforms', JSON.stringify([...selectedPlatforms]));
+  }
+
+  function togglePlatform(id, el) {
+    if (selectedPlatforms.has(id)) {
+      selectedPlatforms.delete(id);
+      el.classList.remove('active');
+    } else {
+      selectedPlatforms.add(id);
+      el.classList.add('active');
+    }
+    savePlatforms();
+  }
+
+  function renderPlatformChips() {
+    const container = document.getElementById('platform-chips');
+    container.style.display = 'flex';
+    container.style.flexWrap = 'wrap';
+    container.style.gap = '0.5rem';
+    if (!platformList.length) {
+      container.innerHTML = '<span class="prov-loading">Loading platforms…</span>';
+      return;
+    }
+    container.innerHTML = platformList.map(p =>
+      `<button class="platform-chip${selectedPlatforms.has(p.id) ? ' active' : ''}"
+        onclick="togglePlatform('${p.id}', this)">${escHtml(p.name)}</button>`
+    ).join('');
+  }
+
+  async function loadPlatforms() {
+    renderPlatformChips();
+    try {
+      const res = await fetch(`/api/platforms?region=${userRegion}`);
+      if (res.ok) {
+        platformList = await res.json();
+        const validIds = new Set(platformList.map(p => p.id));
+        for (const id of [...selectedPlatforms]) {
+          if (!validIds.has(id)) selectedPlatforms.delete(id);
+        }
+        savePlatforms();
+      }
+    } catch (e) {
+      console.warn('Failed to load platforms, using empty list');
+    }
+    renderPlatformChips();
+  }
+
+  initRegionSelect();
+  loadPlatforms();
+
   const input = document.getElementById('pref-input');
   const btn = document.getElementById('search-btn');
   const statusEl = document.getElementById('status');
@@ -1160,7 +1366,19 @@
     const cfg = CATEGORY_CONFIG[currentCategory];
     input.placeholder = cfg.placeholder;
     renderExamples();
+    updatePlatformVisibility();
   }
+
+  function updatePlatformVisibility() {
+    const platRow = document.getElementById('platform-row');
+    if (currentCategory === 'anime') {
+      platRow.style.display = 'none';
+    } else {
+      platRow.style.display = 'flex';
+    }
+  }
+
+  updatePlatformVisibility();
 
   function renderExamples() {
     const cfg = CATEGORY_CONFIG[currentCategory];
@@ -1367,9 +1585,9 @@
 
     const provBar = document.getElementById('modal-providers');
     provBar.innerHTML = '<span class="prov-loading">Finding where to watch...</span>';
-    const region = (navigator.language || 'en-US').split('-').pop().toUpperCase() || 'US';
+    document.getElementById('modal-watch-now').innerHTML = '';
     const cat = item.category || currentCategory;
-    const provParams = new URLSearchParams({ id: item.id, category: cat, region, title: item.title });
+    const provParams = new URLSearchParams({ id: item.id, category: cat, region: userRegion, title: item.title });
     fetch(`/api/providers?${provParams}`)
       .then(r => r.json())
       .then(providers => {
@@ -1377,22 +1595,55 @@
           provBar.innerHTML = '<span class="provider-label">Streaming info not available for your region</span>';
           return;
         }
-        const flatrate = providers.filter(p => p.type === 'flatrate' || p.type === 'free' || p.type === 'ads');
-        const others = providers.filter(p => p.type === 'rent' || p.type === 'buy');
+
+        const hasPlatformFilter = selectedPlatforms.size > 0;
+
+        let flatrate = providers.filter(p => p.type === 'flatrate' || p.type === 'free' || p.type === 'ads');
+        let others = providers.filter(p => p.type === 'rent' || p.type === 'buy');
+
+        if (hasPlatformFilter) {
+          flatrate = flatrate.filter(p => selectedPlatforms.has(String(p.provider_id)));
+          others = others.filter(p => selectedPlatforms.has(String(p.provider_id)));
+        } else {
+          flatrate = flatrate.filter(p => watchUrl(p.provider_id, item.title));
+          others = others.filter(p => watchUrl(p.provider_id, item.title));
+        }
+
+        function badgeHtml(p) {
+          const url = watchUrl(p.provider_id, item.title);
+          const inner = `${p.logo_url ? `<img src="${p.logo_url}" alt="${escHtml(p.name)}">` : ''}${escHtml(p.name)}`;
+          return url
+            ? `<a class="provider-badge" href="${url}" target="_blank" rel="noopener">${inner}</a>`
+            : `<span class="provider-badge">${inner}</span>`;
+        }
+
         let html = '';
         if (flatrate.length) {
           html += '<span class="provider-label">Stream:</span>';
-          html += flatrate.map(p =>
-            `<span class="provider-badge">${p.logo_url ? `<img src="${p.logo_url}" alt="${escHtml(p.name)}">` : ''}${escHtml(p.name)}</span>`
-          ).join('');
+          html += flatrate.map(badgeHtml).join('');
         }
         if (others.length) {
           html += `<span class="provider-label" style="margin-left:${flatrate.length ? '0.6rem' : '0'}">Rent/Buy:</span>`;
-          html += others.slice(0, 4).map(p =>
-            `<span class="provider-badge">${p.logo_url ? `<img src="${p.logo_url}" alt="${escHtml(p.name)}">` : ''}${escHtml(p.name)}</span>`
-          ).join('');
+          html += others.slice(0, 4).map(badgeHtml).join('');
+        }
+        if (!html) {
+          html = '<span class="provider-label">Streaming info not available</span>';
         }
         provBar.innerHTML = html;
+
+        const watchNowEl = document.getElementById('modal-watch-now');
+        const match = flatrate.find(p => selectedPlatforms.has(String(p.provider_id)));
+        if (match) {
+          const url = watchUrl(match.provider_id, item.title);
+          if (url) {
+            watchNowEl.innerHTML =
+              `<a class="watch-now-btn" href="${url}" target="_blank" rel="noopener">
+                ▶ Watch on ${escHtml(match.name)}
+              </a>`;
+          }
+        } else {
+          watchNowEl.innerHTML = '';
+        }
       })
       .catch(() => { provBar.innerHTML = ''; });
 
@@ -1460,7 +1711,15 @@
       const res = await fetch('/api/recommend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ preferences, mode: currentMode, category: currentCategory, creativity: currentCreativity, count: currentCount }),
+        body: JSON.stringify({
+          preferences,
+          mode: currentMode,
+          category: currentCategory,
+          creativity: currentCreativity,
+          count: currentCount,
+          platforms: [...selectedPlatforms].map(Number),
+          region: userRegion,
+        }),
       });
 
       const data = await res.json().catch(() => ({}));

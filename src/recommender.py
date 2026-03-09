@@ -12,6 +12,8 @@ from .config import settings
 from .jikan import search_anime, search_anime_by_genres
 from .models import ContentItem
 from .tmdb import (
+    find_tmdb_id_for_anime,
+    get_watch_providers,
     search_cartoon,
     search_cartoons_by_genres,
     search_movie,
@@ -316,7 +318,11 @@ async def _run_reviews(query: str) -> str:
 
 
 async def _run_anime_tool(
-    name: str, inputs: dict[str, Any]
+    name: str,
+    inputs: dict[str, Any],
+    *,
+    platforms: list[int] | None = None,
+    region: str = "",
 ) -> str:
     if name == "search_by_genre":
         results = await search_anime_by_genres(inputs["genres"])
@@ -329,10 +335,18 @@ async def _run_anime_tool(
 
 
 async def _run_movie_tool(
-    name: str, inputs: dict[str, Any]
+    name: str,
+    inputs: dict[str, Any],
+    *,
+    platforms: list[int] | None = None,
+    region: str = "",
 ) -> str:
     if name == "search_by_genre":
-        results = await search_movies_by_genres(inputs["genres"])
+        results = await search_movies_by_genres(
+            inputs["genres"],
+            provider_ids=platforms,
+            watch_region=region,
+        )
         return json.dumps(
             [_simplify_tmdb_entry(r) for r in results]
         )
@@ -342,10 +356,18 @@ async def _run_movie_tool(
 
 
 async def _run_series_tool(
-    name: str, inputs: dict[str, Any]
+    name: str,
+    inputs: dict[str, Any],
+    *,
+    platforms: list[int] | None = None,
+    region: str = "",
 ) -> str:
     if name == "search_by_genre":
-        results = await search_series_by_genres(inputs["genres"])
+        results = await search_series_by_genres(
+            inputs["genres"],
+            provider_ids=platforms,
+            watch_region=region,
+        )
         return json.dumps(
             [_simplify_tmdb_entry(r, is_tv=True) for r in results]
         )
@@ -355,10 +377,18 @@ async def _run_series_tool(
 
 
 async def _run_cartoon_tool(
-    name: str, inputs: dict[str, Any]
+    name: str,
+    inputs: dict[str, Any],
+    *,
+    platforms: list[int] | None = None,
+    region: str = "",
 ) -> str:
     if name == "search_by_genre":
-        results = await search_cartoons_by_genres(inputs["genres"])
+        results = await search_cartoons_by_genres(
+            inputs["genres"],
+            provider_ids=platforms,
+            watch_region=region,
+        )
         return json.dumps(
             [_simplify_tmdb_entry(r, is_tv=True) for r in results]
         )
@@ -491,7 +521,11 @@ def _any_tools() -> list[dict[str, Any]]:
 
 
 async def _run_any_tool(
-    name: str, inputs: dict[str, Any]
+    name: str,
+    inputs: dict[str, Any],
+    *,
+    platforms: list[int] | None = None,
+    region: str = "",
 ) -> str:
     if name == "search_anime_by_genre":
         results = await search_anime_by_genres(inputs["genres"])
@@ -499,17 +533,29 @@ async def _run_any_tool(
             [_simplify_anime_entry(r) for r in results]
         )
     if name == "search_movies_by_genre":
-        results = await search_movies_by_genres(inputs["genres"])
+        results = await search_movies_by_genres(
+            inputs["genres"],
+            provider_ids=platforms,
+            watch_region=region,
+        )
         return json.dumps(
             [_simplify_tmdb_entry(r) for r in results]
         )
     if name == "search_series_by_genre":
-        results = await search_series_by_genres(inputs["genres"])
+        results = await search_series_by_genres(
+            inputs["genres"],
+            provider_ids=platforms,
+            watch_region=region,
+        )
         return json.dumps(
             [_simplify_tmdb_entry(r, is_tv=True) for r in results]
         )
     if name == "search_cartoons_by_genre":
-        results = await search_cartoons_by_genres(inputs["genres"])
+        results = await search_cartoons_by_genres(
+            inputs["genres"],
+            provider_ids=platforms,
+            watch_region=region,
+        )
         return json.dumps(
             [_simplify_tmdb_entry(r, is_tv=True) for r in results]
         )
@@ -522,9 +568,7 @@ async def _run_any_tool(
 # Agent registry
 # ---------------------------------------------------------------------------
 
-RunToolFn = Callable[
-    [str, dict[str, Any]], Coroutine[Any, Any, str]
-]
+RunToolFn = Callable[..., Coroutine[Any, Any, str]]
 
 AGENTS: dict[str, dict[str, Any]] = {
     "anime": {
@@ -622,12 +666,13 @@ def _build_user_prompt(
     category: str,
     creativity: float = 0.5,
     count: int = 9,
+    has_platform_filter: bool = False,
 ) -> str:
     agent = AGENTS.get(category, AGENTS["anime"])
     label = agent["label"]
     db = agent["db"]
     creativity_hint = _creativity_instruction(creativity)
-    fetch_count = count + 5
+    fetch_count = count + 10 if has_platform_filter else count + 5
 
     category_field = ""
     if category == "any":
@@ -635,12 +680,24 @@ def _build_user_prompt(
             '"category": "anime"|"movie"|"series"|"cartoon", '
         )
 
+    if has_platform_filter:
+        source_instruction = (
+            "ONLY pick titles from the tool search results — "
+            "do NOT add titles from your own knowledge. "
+            "The results are pre-filtered to the user's "
+            "streaming platforms.\n"
+        )
+    else:
+        source_instruction = (
+            "Combine results with your own knowledge. "
+            "If the input is a title name, include it first.\n"
+        )
+
     tail = (
         "After seeing results, IMMEDIATELY return the "
         "final JSON — no more tool calls.\n"
-        "Combine results with your own knowledge. "
-        "If the input is a title name, include it first.\n"
-        f"Return ONLY a JSON array of exactly {fetch_count} objects:\n"
+        + source_instruction
+        + f"Return ONLY a JSON array of exactly {fetch_count} objects:\n"
         "[{" + category_field + '"title": "Full Title", '
         '"reason": "why this fits"}, ...]\n'
     )
@@ -713,17 +770,22 @@ async def get_recommendations(
     category: str = "anime",
     creativity: float = 0.5,
     count: int = 9,
+    platforms: list[int] | None = None,
+    region: str = "IN",
 ) -> list[ContentItem]:
     agent = AGENTS.get(category, AGENTS["anime"])
     system_prompt: str = agent["system_prompt"]()
     tools: list[dict[str, Any]] = agent["tools"]()
-    run_tool: RunToolFn = agent["run_tool"]
+    _base_run_tool: RunToolFn = agent["run_tool"]
+
+    plat = platforms if category != "anime" else None
 
     messages: list[dict[str, Any]] = [
         {
             "role": "user",
             "content": _build_user_prompt(
-                preferences, mode, category, creativity, count
+                preferences, mode, category, creativity, count,
+                has_platform_filter=bool(plat),
             ),
         }
     ]
@@ -762,7 +824,10 @@ async def get_recommendations(
                 name: str, inputs: dict[str, Any]
             ) -> str:
                 try:
-                    return await run_tool(name, inputs)
+                    return await _base_run_tool(
+                        name, inputs,
+                        platforms=plat, region=region,
+                    )
                 except Exception:
                     logger.exception("Tool %s failed", name)
                     return json.dumps(
@@ -827,7 +892,53 @@ async def get_recommendations(
             item.category = pick.get("category", "")
         result.append(item)
 
+    if plat:
+        result = await _filter_by_platform(
+            result, plat, region, category
+        )
+
     return result
+
+
+async def _filter_by_platform(
+    items: list[ContentItem],
+    platform_ids: list[int],
+    region: str,
+    default_category: str,
+) -> list[ContentItem]:
+    """Remove items not available on any of the user's platforms."""
+    plat_set = {str(p) for p in platform_ids}
+
+    async def _check(item: ContentItem) -> bool:
+        try:
+            cat = item.category or default_category
+            media_type = (
+                "tv" if cat in ("anime", "series", "cartoon")
+                else "movie"
+            )
+            if cat == "anime":
+                tmdb_id = await find_tmdb_id_for_anime(item.title)
+                if tmdb_id is None:
+                    return False
+            else:
+                tmdb_id = item.id
+
+            providers = await get_watch_providers(
+                tmdb_id, media_type, region
+            )
+            streaming = [
+                p for p in providers
+                if p["type"] in ("flatrate", "free", "ads")
+            ]
+            return any(p["provider_id"] in plat_set for p in streaming)
+        except Exception:
+            logger.warning(
+                "Provider check failed for: %s", item.title
+            )
+            return False
+
+    checks = await asyncio.gather(*[_check(it) for it in items])
+    return [it for it, ok in zip(items, checks) if ok]
 
 
 # ---------------------------------------------------------------------------

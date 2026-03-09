@@ -29,6 +29,8 @@ class RecommendRequest(BaseModel):
     category: str = "anime"
     creativity: float = 0.5
     count: int = 9
+    platforms: list[int] = []
+    region: str = "IN"
 
 
 class RecommendResponse(BaseModel):

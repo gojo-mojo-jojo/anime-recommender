@@ -13,7 +13,12 @@ from .config import settings
 from .jikan import close_http_client
 from .models import ExplainRequest, RecommendRequest, RecommendResponse
 from .recommender import explain_recommendation_stream, get_recommendations
-from .tmdb import close_tmdb_client, find_tmdb_id_for_anime, get_watch_providers
+from .tmdb import (
+    close_tmdb_client,
+    find_tmdb_id_for_anime,
+    get_available_platforms,
+    get_watch_providers,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -68,8 +73,10 @@ async def index() -> FileResponse:
 async def recommend(request: Request, body: RecommendRequest) -> RecommendResponse:
     creativity = max(0.0, min(1.0, body.creativity))
     count = max(3, min(18, body.count))
+    plat_key = ",".join(str(p) for p in sorted(body.platforms))
     cache_key = (
         f"{body.category}:{body.mode}:{creativity:.2f}:{count}"
+        f":{plat_key}:{body.region}"
         f":{body.preferences.strip().lower()}"
     )
 
@@ -90,7 +97,13 @@ async def recommend(request: Request, body: RecommendRequest) -> RecommendRespon
 
     try:
         items = await get_recommendations(
-            body.preferences, body.mode, body.category, creativity, count
+            body.preferences,
+            body.mode,
+            body.category,
+            creativity,
+            count,
+            platforms=body.platforms or None,
+            region=body.region,
         )
     except Exception:
         logger.exception("Recommendation failed for: %s", body.preferences[:80])
@@ -114,11 +127,29 @@ async def explain(body: ExplainRequest) -> StreamingResponse:
     )
 
 
+@app.get("/api/platforms")
+async def platforms(region: str = "IN") -> list[dict[str, str]]:
+    return await get_available_platforms(region)
+
+
+@app.get("/api/debug/providers")
+async def debug_providers(region: str = "IN") -> dict:
+    from .tmdb import _get
+    movie_data = await _get("/watch/providers/movie", {"watch_region": region})
+    tv_data = await _get("/watch/providers/tv", {"watch_region": region})
+    all_provs = {}
+    for entry in movie_data.get("results", []) + tv_data.get("results", []):
+        pid = entry.get("provider_id", 0)
+        name = entry.get("provider_name", "")
+        all_provs[pid] = name
+    return dict(sorted(all_provs.items(), key=lambda x: x[1]))
+
+
 @app.get("/api/providers")
 async def providers(
     id: int,
     category: str = "anime",
-    region: str = "US",
+    region: str = "IN",
     title: str = "",
 ) -> list[dict[str, str]]:
     media_type = "tv" if category in ("anime", "series", "cartoon") else "movie"

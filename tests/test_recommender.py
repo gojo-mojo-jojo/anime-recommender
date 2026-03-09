@@ -33,15 +33,25 @@ FAKE_MOVIE = ContentItem(
     runtime=148,
 )
 
+FAKE_MOVIE_2 = ContentItem(
+    id=155,
+    title="The Dark Knight",
+    synopsis="Batman fights the Joker...",
+    genres=["Action", "Crime", "Drama"],
+    score=9.0,
+    image_url="https://image.tmdb.org/t/p/w500/dark_knight.jpg",
+    year=2008,
+    content_type="Movie",
+    category="movie",
+    runtime=152,
+)
 
-@pytest.mark.asyncio
-async def test_get_recommendations_anime(monkeypatch):
+
+def _mock_claude_end_turn(json_text: str) -> AsyncMock:
+    """Helper: build a mock Claude client that returns end_turn with JSON."""
     mock_text_block = MagicMock()
     mock_text_block.type = "text"
-    mock_text_block.text = (
-        '[{"title": "Fullmetal Alchemist: Brotherhood",'
-        ' "reason": "Epic action adventure"}]'
-    )
+    mock_text_block.text = json_text
 
     mock_message = MagicMock()
     mock_message.stop_reason = "end_turn"
@@ -49,8 +59,18 @@ async def test_get_recommendations_anime(monkeypatch):
 
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock(return_value=mock_message)
+    return mock_client
 
-    monkeypatch.setattr("src.recommender.claude", mock_client)
+
+@pytest.mark.asyncio
+async def test_get_recommendations_anime(monkeypatch):
+    monkeypatch.setattr(
+        "src.recommender.claude",
+        _mock_claude_end_turn(
+            '[{"title": "Fullmetal Alchemist: Brotherhood",'
+            ' "reason": "Epic action adventure"}]'
+        ),
+    )
 
     with patch(
         "src.recommender._search_item",
@@ -68,21 +88,13 @@ async def test_get_recommendations_anime(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_get_recommendations_movie(monkeypatch):
-    mock_text_block = MagicMock()
-    mock_text_block.type = "text"
-    mock_text_block.text = (
-        '[{"title": "Inception",'
-        ' "reason": "Mind-bending sci-fi thriller"}]'
+    monkeypatch.setattr(
+        "src.recommender.claude",
+        _mock_claude_end_turn(
+            '[{"title": "Inception",'
+            ' "reason": "Mind-bending sci-fi thriller"}]'
+        ),
     )
-
-    mock_message = MagicMock()
-    mock_message.stop_reason = "end_turn"
-    mock_message.content = [mock_text_block]
-
-    mock_client = AsyncMock()
-    mock_client.messages.create = AsyncMock(return_value=mock_message)
-
-    monkeypatch.setattr("src.recommender.claude", mock_client)
 
     with patch(
         "src.recommender._search_item",
@@ -96,3 +108,72 @@ async def test_get_recommendations_movie(monkeypatch):
     assert results[0].title == "Inception"
     assert results[0].reason == "Mind-bending sci-fi thriller"
     assert results[0].category == "movie"
+
+
+@pytest.mark.asyncio
+async def test_platform_filter_removes_unavailable(monkeypatch):
+    """When platforms are selected, titles not on those platforms are removed."""
+    monkeypatch.setattr(
+        "src.recommender.claude",
+        _mock_claude_end_turn(
+            '[{"title": "Inception", "reason": "Great"},'
+            ' {"title": "The Dark Knight", "reason": "Also great"}]'
+        ),
+    )
+
+    call_count = 0
+
+    async def _fake_search(title, cat):
+        nonlocal call_count
+        call_count += 1
+        if "Inception" in title:
+            return FAKE_MOVIE
+        return FAKE_MOVIE_2
+
+    providers_inception = [
+        {"name": "Netflix", "logo_url": "", "type": "flatrate", "provider_id": "8"},
+    ]
+    providers_dark_knight = [
+        {"name": "Hulu", "logo_url": "", "type": "flatrate", "provider_id": "15"},
+    ]
+
+    async def _fake_providers(tmdb_id, media_type, region):
+        if tmdb_id == 27205:
+            return providers_inception
+        return providers_dark_knight
+
+    with patch("src.recommender._search_item", new=_fake_search), \
+         patch("src.recommender.get_watch_providers", new=_fake_providers):
+        results = await get_recommendations(
+            "action thriller",
+            category="movie",
+            platforms=[8],
+            region="IN",
+        )
+
+    assert len(results) == 1
+    assert results[0].title == "Inception"
+
+
+@pytest.mark.asyncio
+async def test_no_platform_filter_keeps_all(monkeypatch):
+    """Without platform selection, all titles are returned."""
+    monkeypatch.setattr(
+        "src.recommender.claude",
+        _mock_claude_end_turn(
+            '[{"title": "Inception", "reason": "Great"},'
+            ' {"title": "The Dark Knight", "reason": "Also great"}]'
+        ),
+    )
+
+    async def _fake_search(title, cat):
+        if "Inception" in title:
+            return FAKE_MOVIE
+        return FAKE_MOVIE_2
+
+    with patch("src.recommender._search_item", new=_fake_search):
+        results = await get_recommendations(
+            "action thriller", category="movie"
+        )
+
+    assert len(results) == 2

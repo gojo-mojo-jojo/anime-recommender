@@ -228,8 +228,25 @@ async def search_cartoon(title: str) -> ContentItem | None:
     return _parse_series(best, category="cartoon")
 
 
+def _add_provider_params(
+    params: dict[str, Any],
+    provider_ids: list[int] | None,
+    watch_region: str,
+) -> None:
+    """Inject with_watch_providers + watch_region into a discover query."""
+    if provider_ids and watch_region:
+        params["with_watch_providers"] = "|".join(
+            str(p) for p in provider_ids
+        )
+        params["watch_region"] = watch_region
+
+
 async def search_movies_by_genres(
-    genres: list[str], limit: int = 10
+    genres: list[str],
+    limit: int = 10,
+    *,
+    provider_ids: list[int] | None = None,
+    watch_region: str = "",
 ) -> list[dict[str, Any]]:
     ids = [
         str(MOVIE_GENRE_IDS[g.lower()])
@@ -243,12 +260,17 @@ async def search_movies_by_genres(
     }
     if ids:
         params["with_genres"] = ",".join(ids)
+    _add_provider_params(params, provider_ids, watch_region)
     data = await _get("/discover/movie", params)
     return (data.get("results") or [])[:limit]
 
 
 async def search_series_by_genres(
-    genres: list[str], limit: int = 10
+    genres: list[str],
+    limit: int = 10,
+    *,
+    provider_ids: list[int] | None = None,
+    watch_region: str = "",
 ) -> list[dict[str, Any]]:
     ids = [
         str(TV_GENRE_IDS[g.lower()])
@@ -262,12 +284,17 @@ async def search_series_by_genres(
     }
     if ids:
         params["with_genres"] = ",".join(ids)
+    _add_provider_params(params, provider_ids, watch_region)
     data = await _get("/discover/tv", params)
     return (data.get("results") or [])[:limit]
 
 
 async def search_cartoons_by_genres(
-    genres: list[str], limit: int = 10
+    genres: list[str],
+    limit: int = 10,
+    *,
+    provider_ids: list[int] | None = None,
+    watch_region: str = "",
 ) -> list[dict[str, Any]]:
     ids = [
         str(TV_GENRE_IDS[g.lower()])
@@ -282,6 +309,7 @@ async def search_cartoons_by_genres(
         "vote_count.gte": 50,
         "with_genres": ",".join(ids_set),
     }
+    _add_provider_params(params, provider_ids, watch_region)
     data = await _get("/discover/tv", params)
     return (data.get("results") or [])[:limit]
 
@@ -316,6 +344,7 @@ async def get_watch_providers(
                 "name": p.get("provider_name", ""),
                 "logo_url": f"{TMDB_LOGO}{logo}" if logo else "",
                 "type": bucket,
+                "provider_id": str(pid),
             })
 
     return providers
@@ -329,3 +358,75 @@ async def find_tmdb_id_for_anime(title: str) -> int | None:
         return None
     best = max(results, key=lambda e: _title_match(title, e, True))
     return best.get("id")
+
+
+# ---------------------------------------------------------------------------
+# Region-aware platform list
+# ---------------------------------------------------------------------------
+
+_PRIORITY_PROVIDERS: dict[str, list[int]] = {
+    "IN": [8, 119, 2336, 122, 120, 337, 390, 237, 232, 9, 350, 283],
+    "US": [8, 9, 337, 15, 1899, 350, 531, 283],
+}
+
+_DEFAULT_PRIORITY: list[int] = [8, 9, 337, 350, 283]
+
+
+async def get_available_platforms(
+    region: str = "IN",
+) -> list[dict[str, Any]]:
+    """Fetch streaming platforms available in a region from TMDB.
+
+    Merges movie + TV provider lists, deduplicates, and returns them
+    with priority providers first, then the rest alphabetically.
+    Only includes subscription/free/ad-supported types (display_priorities
+    below 30 on TMDB tend to be the major streaming services).
+    """
+    movie_data, tv_data = await asyncio.gather(
+        _get("/watch/providers/movie", {"watch_region": region}),
+        _get("/watch/providers/tv", {"watch_region": region}),
+    )
+
+    seen: set[int] = set()
+    all_providers: list[dict[str, Any]] = []
+    for entry in (
+        movie_data.get("results", []) + tv_data.get("results", [])
+    ):
+        pid = entry.get("provider_id", 0)
+        if pid in seen:
+            continue
+        seen.add(pid)
+        logo = entry.get("logo_path") or ""
+        all_providers.append({
+            "id": str(pid),
+            "name": entry.get("provider_name", ""),
+            "logo_url": f"{TMDB_LOGO}{logo}" if logo else "",
+            "display_priority": entry.get("display_priority", 999),
+        })
+
+    priority = _PRIORITY_PROVIDERS.get(
+        region.upper(), _DEFAULT_PRIORITY
+    )
+    priority_set = set(priority)
+    priority_rank = {pid: i for i, pid in enumerate(priority)}
+
+    promoted = sorted(
+        [p for p in all_providers if int(p["id"]) in priority_set],
+        key=lambda p: priority_rank.get(int(p["id"]), 999),
+    )
+    promoted_ids = {p["id"] for p in promoted}
+
+    others = sorted(
+        [
+            p for p in all_providers
+            if p["id"] not in promoted_ids
+            and p["display_priority"] < 30
+        ],
+        key=lambda p: p["name"],
+    )
+
+    for p in promoted + others:
+        p.pop("display_priority", None)
+
+    return promoted + others
+
