@@ -2,10 +2,11 @@ import logging
 from collections import OrderedDict
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import date
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings
@@ -19,6 +20,32 @@ logger = logging.getLogger(__name__)
 
 CACHE_MAX = 64
 _recommendation_cache: OrderedDict[str, list] = OrderedDict()
+
+RATE_LIMIT_PER_DAY = 4
+_rate_limit_store: dict[str, tuple[date, int]] = {}
+
+
+def _get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _check_rate_limit(ip: str) -> bool:
+    """Return True if allowed, False if exceeded. Increments count on allow."""
+    today = date.today()
+    if ip not in _rate_limit_store:
+        _rate_limit_store[ip] = (today, 1)
+        return True
+    stored_date, count = _rate_limit_store[ip]
+    if stored_date != today:
+        _rate_limit_store[ip] = (today, 1)
+        return True
+    if count >= RATE_LIMIT_PER_DAY:
+        return False
+    _rate_limit_store[ip] = (stored_date, count + 1)
+    return True
 
 
 @asynccontextmanager
@@ -38,7 +65,7 @@ async def index() -> FileResponse:
 
 
 @app.post("/api/recommend", response_model=RecommendResponse)
-async def recommend(body: RecommendRequest) -> RecommendResponse:
+async def recommend(request: Request, body: RecommendRequest) -> RecommendResponse:
     creativity = max(0.0, min(1.0, body.creativity))
     count = max(3, min(18, body.count))
     cache_key = (
@@ -50,6 +77,16 @@ async def recommend(body: RecommendRequest) -> RecommendResponse:
         logger.info("Cache hit for: %s", cache_key[:80])
         _recommendation_cache.move_to_end(cache_key)
         return RecommendResponse(recommendations=_recommendation_cache[cache_key])
+
+    ip = _get_client_ip(request)
+    if not _check_rate_limit(ip):
+        return JSONResponse(
+            status_code=429,
+            content={
+                "detail": "rate_limit_exceeded",
+                "message": "You've reached your daily limit of 4 searches. Support the project to keep it running!",
+            },
+        )
 
     try:
         items = await get_recommendations(

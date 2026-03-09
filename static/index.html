@@ -358,6 +358,41 @@
       margin-top: 3rem;
     }
 
+    .rate-limit-message {
+      text-align: center;
+      margin-top: 3rem;
+      padding: 2rem 1.5rem;
+      background: #1a1a2e;
+      border: 1px solid #2e2e50;
+      border-radius: 16px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .rate-limit-title {
+      color: #e0e0f0;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .rate-limit-sub {
+      color: #8878aa;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .rate-limit-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .rate-limit-links .bmc-link {
+      margin: 0;
+    }
+
     .results {
       max-width: 960px;
       margin: 2.5rem auto 4rem;
@@ -1428,9 +1463,23 @@
         body: JSON.stringify({ preferences, mode: currentMode, category: currentCategory, creativity: currentCreativity, count: currentCount }),
       });
 
-      if (!res.ok) throw new Error(`Server error ${res.status}`);
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
+      if (res.status === 429) {
+        stopLoadingSteps();
+        statusEl.innerHTML = `
+          <div class="rate-limit-message">
+            <p class="rate-limit-title">${data.message || "You've reached your daily limit of 4 searches."}</p>
+            <p class="rate-limit-sub">Support the project to keep it running:</p>
+            <div class="rate-limit-links">
+              <a class="bmc-link" href="https://buymeacoffee.com/pratik142857" target="_blank" rel="noopener">☕ Buy Pratik a Coffee · $</a>
+              <a class="bmc-link" href="https://buymeachai.ezee.li/pratik142857" target="_blank" rel="noopener">🍵 Buy Pratik a Chai · ₹</a>
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (!res.ok) throw new Error(data.detail || `Server error ${res.status}`);
       stopLoadingSteps();
       renderCards(data.recommendations);
     } catch (err) {
